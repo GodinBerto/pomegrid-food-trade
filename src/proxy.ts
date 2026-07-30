@@ -10,10 +10,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("access_token")?.value || request.cookies.get("refresh_token")?.value;
 
-  // If logged in and trying to go to login, send to home
-  if (pathname === "/auth" && token) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  // We removed the /auth redirect here to prevent stale cookies from blocking the login page.
+  // The client-side page will redirect if truly logged in.
 
   // Check if route starts with any of the protected prefixes
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));

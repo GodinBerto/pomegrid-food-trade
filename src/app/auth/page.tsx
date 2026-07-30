@@ -17,13 +17,13 @@ export default function AuthPage() {
     const { mutateAsync: loginMut, isPending: isLoggingIn } = useLogin();
     const { mutateAsync: registerMut, isPending: isRegistering } = useRegister();
     const loading = isLoggingIn || isRegistering;
-    const { token } = useUserStore();
+    const { isLoggedIn } = useUserStore();
 
     useEffect(() => {
-        if (token) {
+        if (isLoggedIn) {
             router.push("/");
         }
-    }, [token, router]);
+    }, [isLoggedIn, router]);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
