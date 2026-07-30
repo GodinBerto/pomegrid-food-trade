@@ -13,6 +13,9 @@ export default function AuthPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [fullName, setFullName] = useState("");
+    const [phone, setPhone] = useState("");
+    const [region, setRegion] = useState("");
+    const [address, setAddress] = useState("");
     
     const { mutateAsync: loginMut, isPending: isLoggingIn } = useLogin();
     const { mutateAsync: registerMut, isPending: isRegistering } = useRegister();
@@ -29,7 +32,7 @@ export default function AuthPage() {
         e.preventDefault();
         try {
             if (mode === "signup") {
-                await registerMut({ name: fullName, email, password });
+                await registerMut({ full_name: fullName, email, password, phone, region, address });
                 toast.success("Account created — you're signed in!");
             } else {
                 await loginMut({ email, password });
@@ -51,7 +54,12 @@ export default function AuthPage() {
 
                 <form onSubmit={onSubmit} className="mt-6 space-y-3">
                     {mode === "signup" && (
-                        <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" required />
+                        <>
+                            <input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full name" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" required />
+                            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" required />
+                            <input value={region} onChange={(e) => setRegion(e.target.value)} placeholder="Region" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" required />
+                            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Delivery address" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" required />
+                        </>
                     )}
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" />
                     <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" />

@@ -12,6 +12,8 @@ export const productsApi = {
     const query = new URLSearchParams(params as Record<string, string>).toString();
     return apiRequest<ApiResponse>(`food_trade/products${query ? `?${query}` : ""}`, "GET");
   },
+  listWeeklyProducts: () => 
+    apiRequest<ApiResponse>("food_trade/weekly_products", "GET"),
   getProductBySlug: (slug: string) =>
     apiRequest<ApiResponse>(`food_trade/products/${slug}`, "GET"),
 

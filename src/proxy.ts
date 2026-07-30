@@ -26,8 +26,8 @@ export async function proxy(request: NextRequest) {
     // Check for admin paths
     if (pathname.startsWith("/admin")) {
         try {
-            const baseUrl = process.env.NEXT_PUBLIC_APP_API_URL || "http://127.0.0.1:5000/api/v1/";
-            const endpoint = baseUrl.endsWith("/") ? `${baseUrl}admin/is-admin` : `${baseUrl}/admin/is-admin`;
+            const baseUrl = process.env.NEXT_PUBLIC_APP_API_URL || "http://127.0.0.1:8000/v1/api/";
+            const endpoint = baseUrl.endsWith("/") ? `${baseUrl}food_trade/admin/is-admin` : `${baseUrl}/food_trade/admin/is-admin`;
             
             const res = await fetch(endpoint, {
                 headers: {

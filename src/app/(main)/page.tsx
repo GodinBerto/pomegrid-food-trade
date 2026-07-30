@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { ArrowRight, ShieldCheck, Truck, MessagesSquare } from "lucide-react";
 import { useListCategories } from "@/query/categories";
-import { useListProducts } from "@/query/products";
+import { useListWeeklyProducts } from "@/query/products";
 import { categoryImage, formatGHS, productImage } from "@/lib/format";
 
 export default function Home() {
   const { data: categories = [] as any[] } = useListCategories();
-  const { data: products = [] as any[] } = useListProducts();
-  const featured = products.slice(0, 8);
+  const { data: weeklyProducts = [] as any[] } = useListWeeklyProducts();
+  const featured = weeklyProducts.slice(0, 8);
 
   return (
     <div>
@@ -66,7 +66,7 @@ export default function Home() {
       {/* Featured products */}
       <section className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-bold sm:text-3xl">Available now</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Weekly Products</h2>
           <Link href="/shop" className="text-sm font-semibold text-primary">Browse all →</Link>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">

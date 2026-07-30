@@ -7,13 +7,14 @@ import { toast } from "sonner";
 import { useCart } from "@/hooks/use-cart";
 import { formatGHS } from "@/lib/format";
 import { Lock } from "lucide-react";
-import { usePlaceOrder } from "@/query/orders";
-// import { useWhatsappGroups } from "@/query/catalog"; // To fetch regions
+import { useInitializePayment } from "@/query/payments";
+import { useUserStore } from "@/store/store";
 
 export default function Checkout() {
     const { items, total, clear, hydrated } = useCart();
     const router = useRouter();
-    const { mutateAsync: placeOrderMut } = usePlaceOrder();
+    const { mutateAsync: initPaymentMut } = useInitializePayment();
+    const { user } = useUserStore();
 
     // Fetch active regions. For now, defaulting to some regions if endpoint is not fully implemented.
     // Replace with useWhatsappGroups when available
@@ -42,18 +43,32 @@ export default function Checkout() {
         e.preventDefault();
         setLoading(true);
         try {
-            await placeOrderMut({
+            const orderPayload = {
                 contact_phone: phone,
                 delivery_region: region,
                 delivery_address: deliveryType === "standard" ? address : "PICKUP",
                 notes: `[${deliveryType === "pickup" ? "Pickup" : "Standard delivery"}] ${notes}`,
                 items: items.map((i) => ({ product_id: i.productId, qty: i.qty })),
+            };
+
+            // Store payload for the verify page
+            sessionStorage.setItem("pendingOrder", JSON.stringify(orderPayload));
+
+            // Initialize payment
+            const res = await initPaymentMut({
+                email: user?.email || "customer@pomegrid.com", // Fallback if no user
+                amount: total,
+                callback_url: `${window.location.origin}/checkout/verify`,
             });
-            toast.success("Order placed! Redirecting to secure payment…");
-            clear();
-            router.push("/orders");
+            
+            if (res.data?.authorization_url) {
+                toast.success("Redirecting to secure payment…");
+                window.location.href = res.data.authorization_url;
+            } else {
+                throw new Error("Failed to initialize payment");
+            }
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Failed to place order");
+            toast.error(err instanceof Error ? err.message : "Failed to initialize payment");
         } finally {
             setLoading(false);
         }

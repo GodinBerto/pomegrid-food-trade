@@ -8,6 +8,13 @@ export const useListProducts = (params?: { category?: string; q?: string }) => {
   });
 };
 
+export const useListWeeklyProducts = () => {
+  return useQuery({
+    queryKey: ["weekly_products"],
+    queryFn: async () => (await productsApi.listWeeklyProducts()).data,
+  });
+};
+
 export const useGetProductBySlug = (slug: string) => {
   return useQuery({
     queryKey: ["product", slug],
