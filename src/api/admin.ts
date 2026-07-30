@@ -2,6 +2,6 @@ import { apiRequest } from "@/lib/apiClient";
 import { ApiResponse } from "./products";
 
 export const adminApi = {
-  isAdminCheck: () => 
-    apiRequest<ApiResponse<{ isAdmin: boolean }>>("admin/is-admin", "GET"),
+  isAdminCheck: () =>
+    apiRequest<ApiResponse<{ isAdmin: boolean }>>("food_trade/admin/is-admin", "GET"),
 };
