@@ -2,44 +2,57 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { toast } from "sonner";
 import { ShoppingBag, MessagesSquare, Minus, Plus, ArrowLeft, CheckCircle2, X } from "lucide-react";
-import { useGetProductBySlug } from "@/query/products";
-import { categoryImage, formatGHS, productImage } from "@/lib/format";
+import { resolveImageUrl } from "@/api/products";
+import { useGetProductBySlug, useGetProductImages } from "@/query/products";
+import { categoryImage, formatGHS, productImage, productPrice } from "@/lib/format";
 import { useCart } from "@/hooks/use-cart";
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const { data: product, isLoading } = useGetProductBySlug(slug);
+    const { data: productImages = [], isLoading: imagesLoading } = useGetProductImages(product?.id);
     const { add, isUpdating } = useCart();
     const router = useRouter();
-    
-    // We only initialize qty after product loads
+
     const [qty, setQty] = useState<number>(0);
     const [initialized, setInitialized] = useState(false);
-    
-    if (product && !initialized) {
-        setQty(product.min_order_qty || 1);
-        setInitialized(true);
-    }
-
     const [showModal, setShowModal] = useState(false);
     const [active, setActive] = useState(0);
 
-    if (isLoading) return <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">Loading product...</div>;
-    
-    if (!product) return (
-        <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-            <h1 className="text-2xl font-bold">Product not found</h1>
-            <Link href="/shop" className="mt-4 inline-block rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">Back to shop</Link>
-        </div>
-    );
+    useEffect(() => {
+        if (product && !initialized) {
+            setQty(product.min_order_qty || 1);
+            setInitialized(true);
+        }
+    }, [product, initialized]);
 
-    const main = productImage(product);
-    const catFallback = categoryImage(product.category?.slug);
-    // Gallery: main image + category fallback (deduped) — becomes thumbnails
-    const gallery = Array.from(new Set([main, catFallback]));
+    useEffect(() => {
+        setActive(0);
+    }, [product?.id, productImages.length]);
+
+    if (isLoading || imagesLoading) {
+        return <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">Loading product...</div>;
+    }
+
+    if (!product) {
+        return (
+            <div className="mx-auto max-w-3xl px-4 py-16 text-center">
+                <h1 className="text-2xl font-bold">Product not found</h1>
+                <Link href="/shop" className="mt-4 inline-block rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">
+                    Back to shop
+                </Link>
+            </div>
+        );
+    }
+
+    const galleryFromApi = productImages.map((image) => resolveImageUrl(image.image_url)).filter(Boolean);
+    const fallbackGallery = Array.from(
+        new Set([productImage(product), categoryImage(product.category?.slug ?? product.categories?.slug)]),
+    );
+    const gallery = galleryFromApi.length > 0 ? galleryFromApi : fallbackGallery;
 
     const waMsg = encodeURIComponent(`Hi Pomegrid, I'm interested in ${product.name} (${product.unit}). Please share availability.`);
     const waUrl = `https://wa.me/?text=${waMsg}`;
@@ -63,35 +76,35 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </Link>
 
             <div className="mt-6 grid gap-10 lg:grid-cols-2">
-                {/* Gallery */}
                 <div className="flex gap-4">
-                    <div className="flex flex-col gap-3">
-                        {gallery.map((src, i) => (
-                            <button
-                                key={i}
-                                onClick={() => setActive(i)}
-                                className={`h-20 w-20 overflow-hidden rounded-2xl transition-opacity ${active === i ? "ring-2 ring-primary" : "opacity-60 hover:opacity-100"}`}
-                            >
-                                <img src={src} alt={`${product.name} ${i + 1}`} className="h-full w-full object-cover" />
-                            </button>
-                        ))}
-                    </div>
+                    {gallery.length > 1 && (
+                        <div className="flex flex-col gap-3">
+                            {gallery.map((src, index) => (
+                                <button
+                                    key={`${src}-${index}`}
+                                    onClick={() => setActive(index)}
+                                    className={`h-20 w-20 overflow-hidden rounded-2xl transition-opacity ${active === index ? "ring-2 ring-primary" : "opacity-60 hover:opacity-100"}`}
+                                >
+                                    <img src={src} alt={`${product.name} ${index + 1}`} className="h-full w-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                     <div className="flex-1 overflow-hidden rounded-3xl bg-muted">
                         <img
-                            src={gallery[active]}
+                            src={gallery[active] ?? gallery[0]}
                             alt={product.name}
                             className="aspect-square w-full object-cover"
                         />
                     </div>
                 </div>
 
-                {/* Info */}
                 <div>
                     {product.category && (
                         <div className="text-xs font-semibold uppercase tracking-wider text-secondary">{product.category.name}</div>
                     )}
                     <h1 className="mt-2 text-3xl font-bold sm:text-4xl">{product.name}</h1>
-                    <div className="mt-4 text-3xl font-bold text-primary">{formatGHS(Number(product.price))}</div>
+                    <div className="mt-4 text-3xl font-bold text-primary">{formatGHS(productPrice(product))}</div>
                     <div className="text-sm text-muted-foreground">per {product.unit} · minimum order {product.min_order_qty}</div>
 
                     {product.description && <p className="mt-6 text-foreground/80">{product.description}</p>}
@@ -124,7 +137,6 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                 </div>
             </div>
 
-            {/* Added-to-cart modal */}
             {showModal && (
                 <div
                     className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"

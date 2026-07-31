@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { productsApi } from "@/api/products";
+import { productsApi, type AdminProductPayload } from "@/api/products";
 
 export const useListProducts = (params?: { category?: string; q?: string }) => {
   return useQuery({
@@ -23,6 +23,14 @@ export const useGetProductBySlug = (slug: string) => {
   });
 };
 
+export const useGetProductImages = (productId?: number | string | null) => {
+  return useQuery({
+    queryKey: ["product-images", productId],
+    queryFn: async () => (await productsApi.getProductImages(productId!)).data ?? [],
+    enabled: productId !== undefined && productId !== null && productId !== "",
+  });
+};
+
 export const useAdminListProducts = () => {
   return useQuery({
     queryKey: ["admin-products"],
@@ -33,10 +41,14 @@ export const useAdminListProducts = () => {
 export const useAdminUpsertProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: productsApi.adminUpsertProduct,
-    onSuccess: () => {
+    mutationFn: (payload: AdminProductPayload) => productsApi.adminUpsertProduct(payload),
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      const productId = data?.data?.id ?? variables.id;
+      if (productId) {
+        queryClient.invalidateQueries({ queryKey: ["product-images", productId] });
+      }
     },
   });
 };

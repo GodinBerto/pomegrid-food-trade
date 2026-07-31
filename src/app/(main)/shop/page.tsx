@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useListCategories } from "@/query/categories";
 import { useListProducts } from "@/query/products";
-import { formatGHS, productImage } from "@/lib/format";
+import { formatGHS, productImage, productPrice } from "@/lib/format";
 import { Search } from "lucide-react";
 
 export default function Shop() {
@@ -84,7 +84,7 @@ export default function Shop() {
                             <div className="text-sm font-bold leading-snug line-clamp-2">{p.name}</div>
                             <div className="text-xs text-muted-foreground">per {p.unit}</div>
                             <div className="mt-3 flex items-end justify-between">
-                                <div className="text-lg font-extrabold text-primary">{formatGHS(Number(p.price))}</div>
+                                <div className="text-lg font-extrabold text-primary">{formatGHS(productPrice(p))}</div>
                                 <div className="rounded-full bg-primary-soft px-3 py-1 text-[11px] font-semibold text-primary opacity-0 transition-opacity group-hover:opacity-100">
                                     View →
                                 </div>
