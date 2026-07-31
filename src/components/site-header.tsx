@@ -12,7 +12,7 @@ import {
   Package,
 } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
-import { isAdminUser, logoutUser } from "@/lib/auth";
+import { logoutUser } from "@/lib/auth";
 import { useIsAdminCheck } from "@/query/admin";
 import { useUserStore } from "@/store/store";
 import {
@@ -29,7 +29,7 @@ export function SiteHeader() {
   const { data: adminStatus } = useIsAdminCheck();
 
   const signedIn = isLoggedIn;
-  const isAdmin = adminStatus?.isAdmin === true || isAdminUser(user);
+  const isAdmin = adminStatus?.isAdmin === true;
 
   const [open, setOpen] = useState(false);
   const path = usePathname();

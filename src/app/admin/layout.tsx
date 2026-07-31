@@ -51,7 +51,7 @@ export default function AdminLayout({
     isError,
   } = useIsAdminCheck();
 
-  const isAdmin = adminStatus?.isAdmin === true || isAdminUser(user);
+  const isAdmin = adminStatus?.isAdmin === true;
   const hasAuthSession = isLoggedIn || hasSession();
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function AdminLayout({
       return;
     }
 
-    if (isFetched && adminStatus?.isAdmin === false && !isAdminUser(user)) {
+    if (isFetched && adminStatus?.isAdmin === false) {
       router.replace("/");
     }
   }, [storeReady, hasAuthSession, isFetched, adminStatus, user, router]);
