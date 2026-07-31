@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Package, ShoppingCart, MessageCircle, Menu, X, LogOut, Home } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, MessageCircle, Menu, X, LogOut, Home, Tags } from "lucide-react";
 import { isAdminUser, logoutUser } from "@/lib/auth";
 import { hasSession } from "@/lib/apiClient";
 import { useIsAdminCheck } from "@/query/admin";
@@ -12,6 +12,7 @@ import { useUserStore } from "@/store/store";
 const NAV: ReadonlyArray<{ to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }> = [
     { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { to: "/admin/products", label: "Products", icon: Package },
+    { to: "/admin/categories", label: "Categories", icon: Tags },
     { to: "/admin/orders", label: "Orders", icon: ShoppingCart },
     { to: "/admin/whatsapp", label: "WhatsApp", icon: MessageCircle },
 ];

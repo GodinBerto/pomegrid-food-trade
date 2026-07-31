@@ -4,12 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 import { useAdminListProducts, useAdminUpsertProduct, useAdminDeleteProduct } from "@/query/products";
-import { useListCategories } from "@/query/categories";
+import { useAdminListCategories } from "@/query/categories";
 import { formatGHS } from "@/lib/format";
 
 export default function AdminProducts() {
     const { data: products = [] as any[], isLoading: isLoadingProducts } = useAdminListProducts();
-    const { data: cats = [] as any[], isLoading: isLoadingCats } = useListCategories();
+    const { data: cats = [] as any[], isLoading: isLoadingCats } = useAdminListCategories();
     
     const { mutateAsync: upsertMut, isPending: isUpserting } = useAdminUpsertProduct();
     const { mutateAsync: deleteMut, isPending: isDeleting } = useAdminDeleteProduct();
@@ -37,7 +37,7 @@ export default function AdminProducts() {
                             <div className="font-semibold">{p.name}</div>
                             <div className="text-xs text-muted-foreground">{p.slug} · per {p.unit}</div>
                         </div>
-                        <div className="text-sm font-bold">{formatGHS(Number(p.price))}</div>
+                        <div className="text-sm font-bold">{formatGHS(Number(p.price_ghs))}</div>
                         <span className={p.is_active ? "rounded-full bg-secondary-soft px-3 py-1 text-xs font-semibold text-secondary" : "rounded-full bg-background px-3 py-1 text-xs text-muted-foreground"}>
                             {p.is_active ? "Active" : "Hidden"}
                         </span>
@@ -98,7 +98,7 @@ export default function AdminProducts() {
                                             name: editing.name,
                                             slug: editing.slug,
                                             description: editing.description ?? "",
-                                            price: Number(editing.price ?? 0),
+                                            price_ghs: Number(editing.price ?? 0),
                                             unit: editing.unit || "bag",
                                             min_order_qty: Number(editing.min_order_qty ?? 1),
                                             stock_qty: Number(editing.stock_qty ?? 0),
