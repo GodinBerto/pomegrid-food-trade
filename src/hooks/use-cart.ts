@@ -1,81 +1,85 @@
-import { useEffect, useState, useCallback } from "react";
+"use client";
 
-export type CartItem = {
-  productId: string;
-  slug: string;
-  name: string;
-  unit: string;
-  pricGhs: number;
-  qty: number;
-  imageUrl?: string | null;
-};
+import { useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import type { CartItem } from "@/api/cart";
+import {
+  useAddToCart,
+  useClearCart,
+  useGetCart,
+  useRemoveCartItem,
+  useUpdateCartItem,
+} from "@/query/cart";
+import { useUserStore } from "@/store/store";
 
-const KEY = "pomegrid_cart_v1";
-
-function read(): CartItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as CartItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function write(items: CartItem[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event("pomegrid-cart-change"));
-}
+export type { CartItem };
 
 export function useCart() {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+  const router = useRouter();
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const { data: items = [], isFetched, isLoading } = useGetCart({ enabled: isLoggedIn });
 
-  useEffect(() => {
-    setItems(read());
-    setHydrated(true);
-    const handler = () => setItems(read());
-    window.addEventListener("pomegrid-cart-change", handler);
-    window.addEventListener("storage", handler);
-    return () => {
-      window.removeEventListener("pomegrid-cart-change", handler);
-      window.removeEventListener("storage", handler);
-    };
-  }, []);
+  const addMut = useAddToCart();
+  const updateMut = useUpdateCartItem();
+  const removeMut = useRemoveCartItem();
+  const clearMut = useClearCart();
 
-  const add = useCallback((item: CartItem) => {
-    const current = read();
-    const existing = current.find((i) => i.productId === item.productId);
-    let next: CartItem[];
-    if (existing) {
-      next = current.map((i) => (i.productId === item.productId ? { ...i, qty: i.qty + item.qty } : i));
-    } else {
-      next = [...current, item];
-    }
-    write(next);
-    setItems(next);
-  }, []);
+  const add = useCallback(
+    async (item: { productId: string | number; qty: number }) => {
+      if (!isLoggedIn) {
+        toast.error("Please sign in to add items to your cart");
+        router.push("/auth");
+        return;
+      }
 
-  const setQty = useCallback((productId: string, qty: number) => {
-    const next = read().map((i) => (i.productId === productId ? { ...i, qty: Math.max(1, qty) } : i));
-    write(next);
-    setItems(next);
-  }, []);
+      await addMut.mutateAsync({
+        product_id: item.productId,
+        quantity: item.qty,
+      });
+    },
+    [addMut, isLoggedIn, router],
+  );
 
-  const remove = useCallback((productId: string) => {
-    const next = read().filter((i) => i.productId !== productId);
-    write(next);
-    setItems(next);
-  }, []);
+  const setQty = useCallback(
+    async (cartItemId: number, qty: number) => {
+      if (qty < 1) return;
+      await updateMut.mutateAsync({ itemId: cartItemId, quantity: qty });
+    },
+    [updateMut],
+  );
 
-  const clear = useCallback(() => {
-    write([]);
-    setItems([]);
-  }, []);
+  const remove = useCallback(
+    async (cartItemId: number) => {
+      await removeMut.mutateAsync(cartItemId);
+    },
+    [removeMut],
+  );
 
-  const total = items.reduce((sum, i) => sum + i.pricGhs * i.qty, 0);
-  const count = items.reduce((sum, i) => sum + i.qty, 0);
+  const clear = useCallback(async () => {
+    await clearMut.mutateAsync();
+  }, [clearMut]);
 
-  return { items, add, setQty, remove, clear, total, count, hydrated };
+  const total = items.reduce((sum, item) => sum + item.pricGhs * item.qty, 0);
+  const count = items.reduce((sum, item) => sum + item.qty, 0);
+  const hydrated = !isLoggedIn || isFetched;
+  const isUpdating =
+    addMut.isPending ||
+    updateMut.isPending ||
+    removeMut.isPending ||
+    clearMut.isPending;
+
+  return {
+    items,
+    add,
+    setQty,
+    remove,
+    clear,
+    total,
+    count,
+    hydrated,
+    isLoading,
+    isUpdating,
+    isLoggedIn,
+  };
 }

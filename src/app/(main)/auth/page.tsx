@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { authApi } from "@/api/auth";
+import { fetchAndStoreUser, resolvePostLoginPath } from "@/lib/auth";
 import { useLogin, useRegister } from "@/query/auth";
 import { useUserStore } from "@/store/store";
 
@@ -22,13 +22,15 @@ export default function AuthPage() {
     const { mutateAsync: loginMut, isPending: isLoggingIn } = useLogin();
     const { mutateAsync: registerMut, isPending: isRegistering } = useRegister();
     const loading = isLoggingIn || isRegistering;
-    const { isLoggedIn, login } = useUserStore();
+    const { isLoggedIn, user } = useUserStore();
 
     useEffect(() => {
-        if (isLoggedIn) {
-            router.push("/");
-        }
-    }, [isLoggedIn, router]);
+        if (!isLoggedIn || !user) return;
+
+        resolvePostLoginPath(user).then((path) => {
+            router.replace(path);
+        });
+    }, [isLoggedIn, user, router]);
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -44,15 +46,17 @@ export default function AuthPage() {
                 setPassword("");
                 setConfirmPassword("");
                 return;
-            } else {
-                await loginMut({ email, password });
-                const meRes = await authApi.getMe();
-                if (meRes?.data) {
-                    login(meRes.data);
-                }
-                toast.success("Welcome back!");
-                router.push("/");
             }
+
+            await loginMut({ email, password });
+            const storedUser = await fetchAndStoreUser();
+            if (!storedUser) {
+                toast.error("Signed in, but could not load your profile. Please try again.");
+                return;
+            }
+
+            toast.success("Welcome back!");
+            router.replace(await resolvePostLoginPath(storedUser));
         } catch (err: any) {
             toast.error(err.message || "Something went wrong");
         }

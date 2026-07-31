@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShoppingBag, Menu, X, User as UserIcon, LogOut, Package } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
+import { isAdminUser, logoutUser } from "@/lib/auth";
+import { useIsAdminCheck } from "@/query/admin";
 import { useUserStore } from "@/store/store";
 import {
   DropdownMenu,
@@ -16,10 +18,11 @@ import {
 
 export function SiteHeader() {
   const { count, hydrated } = useCart();
-  const { isLoggedIn, user, logout } = useUserStore();
+  const { isLoggedIn, user } = useUserStore();
+  const { data: adminStatus } = useIsAdminCheck();
   
   const signedIn = isLoggedIn;
-  const isAdmin = user?.role === "admin" || user?.is_admin;
+  const isAdmin = adminStatus?.isAdmin === true || isAdminUser(user);
   
   const [open, setOpen] = useState(false);
   const path = usePathname();
@@ -80,7 +83,10 @@ export function SiteHeader() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => { logout(); window.location.href = "/"; }} 
+                  onClick={async () => {
+                    await logoutUser();
+                    window.location.href = "/";
+                  }} 
                   className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
                 >
                   <LogOut className="mr-2 h-4 w-4" />

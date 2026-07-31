@@ -10,15 +10,17 @@ export default function AdminOverview() {
     const { data: orders = [] as any[] } = useAdminListOrders();
     const { data: products = [] as any[] } = useAdminListProducts();
 
-    const revenue = orders.reduce((s, o) => s + Number(o.total_price), 0);
-    const pending = orders.filter((o) => o.status === "pending").length;
+    const revenue = orders.reduce((sum: number, order: { total_ghs?: number; total_price?: number }) => {
+        return sum + Number(order.total_ghs ?? order.total_price ?? 0);
+    }, 0);
+    const pending = orders.filter((order: { status: string }) => order.status === "pending").length;
 
     return (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat label="Total revenue" value={formatGHS(revenue)} />
             <Stat label="Total orders" value={orders.length.toString()} />
             <Stat label="Pending orders" value={pending.toString()} tone="secondary" />
-            <Stat label="Active products" value={products.filter((p) => p.is_active).length.toString()} />
+            <Stat label="Active products" value={products.filter((p: { is_active?: boolean }) => p.is_active).length.toString()} />
 
             <div className="col-span-full rounded-3xl bg-muted p-6">
                 <h2 className="text-lg font-semibold">Recent orders</h2>
@@ -30,7 +32,7 @@ export default function AdminOverview() {
                                 <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString()}</div>
                             </div>
                             <div className="text-xs uppercase tracking-wide">{o.status}</div>
-                            <div className="font-bold">{formatGHS(Number(o.total_price))}</div>
+                            <div className="font-bold">{formatGHS(Number(o.total_ghs ?? o.total_price ?? 0))}</div>
                         </div>
                     ))}
                     {orders.length === 0 && <div className="text-sm text-muted-foreground">No orders yet.</div>}

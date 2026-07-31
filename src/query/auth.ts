@@ -1,5 +1,6 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authApi } from "@/api/auth";
+import { logoutUser } from "@/lib/auth";
 
 export const useLogin = () => {
   return useMutation({
@@ -14,8 +15,16 @@ export const useRegister = () => {
 };
 
 export const useLogout = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: logoutUser,
+    onSettled: () => {
+      queryClient.removeQueries({ queryKey: ["auth"] });
+      queryClient.removeQueries({ queryKey: ["admin"] });
+      queryClient.removeQueries({ queryKey: ["cart"] });
+      queryClient.removeQueries({ queryKey: ["my-orders"] });
+    },
   });
 };
 

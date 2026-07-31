@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "@/hooks/use-cart";
@@ -11,24 +10,35 @@ import { useInitializePayment } from "@/query/payments";
 import { useUserStore } from "@/store/store";
 
 export default function Checkout() {
-    const { items, total, clear, hydrated } = useCart();
-    const router = useRouter();
+    const { items, total, hydrated, isLoggedIn } = useCart();
     const { mutateAsync: initPaymentMut } = useInitializePayment();
     const { user } = useUserStore();
 
-    // Fetch active regions. For now, defaulting to some regions if endpoint is not fully implemented.
-    // Replace with useWhatsappGroups when available
     const activeRegions = ["Greater Accra", "Ashanti", "Northern"];
     const regionList = activeRegions;
 
-    const [phone, setPhone] = useState("");
+    const [phone, setPhone] = useState(user?.phone ?? "");
     const [deliveryType, setDeliveryType] = useState<"pickup" | "standard">("standard");
-    const [region, setRegion] = useState(regionList[0] ?? "Greater Accra");
-    const [address, setAddress] = useState("");
+    const [region, setRegion] = useState(user?.region ?? regionList[0] ?? "Greater Accra");
+    const [address, setAddress] = useState(user?.address ?? "");
     const [notes, setNotes] = useState("");
     const [loading, setLoading] = useState(false);
 
-    if (!hydrated) return <div className="mx-auto max-w-4xl px-4 py-14">Loading…</div>;
+    if (!hydrated) {
+        return <div className="mx-auto max-w-4xl px-4 py-14">Loading…</div>;
+    }
+
+    if (!isLoggedIn) {
+        return (
+            <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+                <h1 className="text-2xl font-bold">Sign in to checkout</h1>
+                <p className="mt-2 text-muted-foreground">Your cart is linked to your account.</p>
+                <Link href="/auth" className="mt-6 inline-block rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground">
+                    Sign in
+                </Link>
+            </div>
+        );
+    }
 
     if (items.length === 0) {
         return (
@@ -48,19 +58,17 @@ export default function Checkout() {
                 delivery_region: region,
                 delivery_address: deliveryType === "standard" ? address : "PICKUP",
                 notes: `[${deliveryType === "pickup" ? "Pickup" : "Standard delivery"}] ${notes}`,
-                items: items.map((i) => ({ product_id: i.productId, qty: i.qty })),
+                items: items.map((item) => ({ product_id: item.productId, qty: item.qty })),
             };
 
-            // Store payload for the verify page
             sessionStorage.setItem("pendingOrder", JSON.stringify(orderPayload));
 
-            // Initialize payment
             const res = await initPaymentMut({
-                email: user?.email || "customer@pomegrid.com", // Fallback if no user
+                email: user?.email || "customer@pomegrid.com",
                 amount: total,
                 callback_url: `${window.location.origin}/checkout/verify`,
             });
-            
+
             if (res.data?.authorization_url) {
                 toast.success("Redirecting to secure payment…");
                 window.location.href = res.data.authorization_url;
@@ -134,10 +142,10 @@ export default function Checkout() {
                 <aside className="h-fit rounded-3xl bg-primary p-6 text-primary-foreground">
                     <div className="text-sm font-semibold opacity-80">Order summary</div>
                     <div className="mt-4 space-y-2 text-sm">
-                        {items.map((it) => (
-                            <div key={it.productId} className="flex justify-between">
-                                <span>{it.name} × {it.qty}</span>
-                                <span>{formatGHS(it.pricGhs * it.qty)}</span>
+                        {items.map((item) => (
+                            <div key={item.id} className="flex justify-between">
+                                <span>{item.name} × {item.qty}</span>
+                                <span>{formatGHS(item.pricGhs * item.qty)}</span>
                             </div>
                         ))}
                     </div>
@@ -145,6 +153,7 @@ export default function Checkout() {
                         Total: {formatGHS(total)}
                     </div>
                     <button
+                        type="submit"
                         disabled={loading}
                         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary-foreground py-3 text-center text-sm font-semibold text-primary disabled:opacity-60"
                     >

@@ -1,5 +1,9 @@
 import { useUserStore } from "@/store/store";
 import Cookies from "js-cookie";
+import {
+  ACCESS_TOKEN_COOKIES,
+  REFRESH_TOKEN_COOKIES,
+} from "@/lib/session-cookies";
 
 // src/api/client.ts
 const RAW_API_BASE_URL =
@@ -20,6 +24,21 @@ const REFRESH_CSRF_COOKIE = "refresh_csrf_token";
 const LEGACY_REFRESH_CSRF_COOKIE = "csrf_refresh_token";
 const ACCESS_TOKEN_STORAGE_KEY = "access_token";
 const REFRESH_ENDPOINT = "auth/refresh";
+
+const readBrowserCookie = (names: readonly string[]) => {
+  for (const name of names) {
+    const value = Cookies.get(name);
+    if (value) return value;
+  }
+
+  return undefined;
+};
+
+const removeBrowserCookies = (names: readonly string[]) => {
+  for (const name of names) {
+    Cookies.remove(name);
+  }
+};
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -79,7 +98,7 @@ export const buildApiUrl = (endpoint: string) => {
 };
 
 const getAccessToken = () => {
-  const cookieToken = Cookies.get(ACCESS_TOKEN_COOKIE);
+  const cookieToken = readBrowserCookie(ACCESS_TOKEN_COOKIES);
   if (cookieToken) return cookieToken;
 
   try {
@@ -109,7 +128,7 @@ const getRefreshCsrfToken = () => {
 };
 
 const getRefreshToken = () => {
-  const cookieToken = Cookies.get(REFRESH_TOKEN_COOKIE);
+  const cookieToken = readBrowserCookie(REFRESH_TOKEN_COOKIES);
   if (cookieToken) return cookieToken;
 
   try {
@@ -122,7 +141,9 @@ const getRefreshToken = () => {
 const setRefreshToken = (refreshToken?: string) => {
   if (!refreshToken) return;
 
-  Cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, getCookieOptions(30));
+  for (const name of REFRESH_TOKEN_COOKIES) {
+    Cookies.set(name, refreshToken, getCookieOptions(30));
+  }
 
   try {
     localStorage.setItem(REFRESH_TOKEN_COOKIE, refreshToken);
@@ -132,7 +153,7 @@ const setRefreshToken = (refreshToken?: string) => {
 };
 
 const clearRefreshToken = () => {
-  Cookies.remove(REFRESH_TOKEN_COOKIE);
+  removeBrowserCookies(REFRESH_TOKEN_COOKIES);
 
   try {
     localStorage.removeItem(REFRESH_TOKEN_COOKIE);
@@ -170,7 +191,7 @@ const clearRefreshCsrfToken = () => {
 };
 
 const clearAccessToken = () => {
-  Cookies.remove(ACCESS_TOKEN_COOKIE);
+  removeBrowserCookies(ACCESS_TOKEN_COOKIES);
   try {
     localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   } catch {
@@ -435,7 +456,9 @@ const refreshAccessToken = async (): Promise<boolean> => {
 };
 
 export const setAccessToken = (token: string) => {
-  Cookies.set(ACCESS_TOKEN_COOKIE, token, getCookieOptions(1));
+  for (const name of ACCESS_TOKEN_COOKIES) {
+    Cookies.set(name, token, getCookieOptions(1));
+  }
   try {
     localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
   } catch {

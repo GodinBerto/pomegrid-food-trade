@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { LayoutDashboard, Package, ShoppingCart, MessageCircle, Menu, X, LogOut, Home } from "lucide-react";
+import { isAdminUser, logoutUser } from "@/lib/auth";
+import { hasSession } from "@/lib/apiClient";
+import { useIsAdminCheck } from "@/query/admin";
 import { useUserStore } from "@/store/store";
 
 const NAV: ReadonlyArray<{ to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean }> = [
@@ -15,22 +18,67 @@ const NAV: ReadonlyArray<{ to: string; label: string; icon: typeof LayoutDashboa
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const path = usePathname();
+    const router = useRouter();
     const [mobileOpen, setMobileOpen] = useState(false);
-    const { logout } = useUserStore();
+    const [storeReady, setStoreReady] = useState(
+        () => useUserStore.persist.hasHydrated(),
+    );
+    const { user, isLoggedIn } = useUserStore();
+    const { data: adminStatus, isLoading: checkingAdmin, isFetched, isError } = useIsAdminCheck();
+
+    const isAdmin = adminStatus?.isAdmin === true || isAdminUser(user);
+    const hasAuthSession = isLoggedIn || hasSession();
+
+    useEffect(() => {
+        if (storeReady) return;
+        return useUserStore.persist.onFinishHydration(() => {
+            setStoreReady(true);
+        });
+    }, [storeReady]);
 
     useEffect(() => { setMobileOpen(false); }, [path]);
+
+    useEffect(() => {
+        if (!storeReady) return;
+
+        if (!hasAuthSession) {
+            router.replace("/auth");
+            return;
+        }
+
+        if (isFetched && adminStatus?.isAdmin === false && !isAdminUser(user)) {
+            router.replace("/");
+        }
+    }, [storeReady, hasAuthSession, isFetched, adminStatus, user, router]);
 
     const current = NAV.find((n) => n.exact ? path === n.to : path.startsWith(n.to));
     const pageTitle = current?.label ?? "Admin";
 
+    if (!storeReady || !hasAuthSession || checkingAdmin || (!isAdmin && !isFetched && !isError)) {
+        return (
+            <div className="flex min-h-[50vh] items-center justify-center px-4 py-20 text-sm text-muted-foreground">
+                Checking admin access…
+            </div>
+        );
+    }
+
+    if (!isAdmin) {
+        return (
+            <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-4 py-20 text-center">
+                <p className="text-sm text-muted-foreground">You do not have permission to access the admin panel.</p>
+                <Link href="/" className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground">
+                    Back to home
+                </Link>
+            </div>
+        );
+    }
+
     return (
-        <div className="-mx-4 -my-8 flex min-h-[calc(100vh-8rem)] bg-muted/40 lg:-mx-8">
-            {/* Desktop sidebar */}
+        <div className="flex h-screen bg-muted/40">
             <aside className="hidden w-64 shrink-0 flex-col bg-primary text-primary-foreground md:flex">
                 <SidebarInner path={path} />
             </aside>
 
-            {/* Mobile drawer */}
             {mobileOpen && (
                 <div className="fixed inset-0 z-50 md:hidden">
                     <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
@@ -60,7 +108,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <Home className="h-4 w-4" /> View site
                         </Link>
                         <button
-                            onClick={() => { logout(); window.location.href = "/"; }}
+                            onClick={async () => {
+                                await logoutUser();
+                                window.location.href = "/";
+                            }}
                             className="inline-flex items-center gap-1.5 rounded-full bg-muted px-4 py-2 text-sm font-medium"
                         >
                             <LogOut className="h-4 w-4" /> Sign out

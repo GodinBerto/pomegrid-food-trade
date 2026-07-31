@@ -1,62 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-
-const PROTECTED_PREFIXES = [
-  "/admin",
-  "/orders"
-];
+import { hasCookieSession } from "@/lib/session-cookies";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("access_token")?.value || request.cookies.get("refresh_token")?.value;
 
-  // We removed the /auth redirect here to prevent stale cookies from blocking the login page.
-  // The client-side page will redirect if truly logged in.
-
-  // Check if route starts with any of the protected prefixes
-  const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-
-  // 🔒 Protected routes - require authentication
-  if (isProtected) {
-    // ❌ Protected but no token → redirect to auth
-    if (!token) {
-      return NextResponse.redirect(new URL("/auth", request.url));
-    }
-
-    // Check for admin paths
-    if (pathname.startsWith("/admin")) {
-        try {
-            const baseUrl = process.env.NEXT_PUBLIC_APP_API_URL || "http://127.0.0.1:8000/v1/api/";
-            const endpoint = baseUrl.endsWith("/") ? `${baseUrl}food_trade/admin/is-admin` : `${baseUrl}/food_trade/admin/is-admin`;
-            
-            const res = await fetch(endpoint, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            
-            if (!res.ok) {
-                return NextResponse.redirect(new URL("/", request.url));
-            }
-            
-            const data = await res.json();
-            if (!data.data?.isAdmin) {
-                return NextResponse.redirect(new URL("/", request.url));
-            }
-        } catch (error) {
-             return NextResponse.redirect(new URL("/", request.url));
-        }
-    }
-
-    // ✅ Protected with token → allow access
+  // Admin access is verified client-side via the is-admin API.
+  if (pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
 
-  // ✅ Allow all other public routes (e.g. /shop, /products, /about, /cart)
+  if (pathname.startsWith("/orders") && !hasCookieSession(request.cookies)) {
+    return NextResponse.redirect(new URL("/auth", request.url));
+  }
+
   return NextResponse.next();
 }
 
-// Apply proxy to all routes except static files and API
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|public/).*)"],
 };

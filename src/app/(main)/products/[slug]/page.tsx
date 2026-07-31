@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, use } from "react";
+import { toast } from "sonner";
 import { ShoppingBag, MessagesSquare, Minus, Plus, ArrowLeft, CheckCircle2, X } from "lucide-react";
 import { useGetProductBySlug } from "@/query/products";
 import { categoryImage, formatGHS, productImage } from "@/lib/format";
@@ -11,7 +12,7 @@ import { useCart } from "@/hooks/use-cart";
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const { data: product, isLoading } = useGetProductBySlug(slug);
-    const { add } = useCart();
+    const { add, isUpdating } = useCart();
     const router = useRouter();
     
     // We only initialize qty after product loads
@@ -43,17 +44,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
     const waMsg = encodeURIComponent(`Hi Pomegrid, I'm interested in ${product.name} (${product.unit}). Please share availability.`);
     const waUrl = `https://wa.me/?text=${waMsg}`;
 
-    function handleAdd() {
-        add({
-            productId: product!.id,
-            slug: product!.slug,
-            name: product!.name,
-            unit: product!.unit,
-            pricGhs: Number(product!.price),
-            qty,
-            imageUrl: productImage(product!),
-        });
-        setShowModal(true);
+    async function handleAdd() {
+        try {
+            await add({
+                productId: product!.id,
+                qty,
+            });
+            setShowModal(true);
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+        }
     }
 
     return (
@@ -112,9 +112,10 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
                     <div className="mt-6 flex flex-wrap gap-3">
                         <button
                             onClick={handleAdd}
-                            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
+                            disabled={isUpdating}
+                            className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
                         >
-                            <ShoppingBag className="h-4 w-4" /> Add to cart
+                            <ShoppingBag className="h-4 w-4" /> {isUpdating ? "Adding…" : "Add to cart"}
                         </button>
                         <a href={waUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-3 text-sm font-semibold text-secondary-foreground">
                             <MessagesSquare className="h-4 w-4" /> Chat on WhatsApp

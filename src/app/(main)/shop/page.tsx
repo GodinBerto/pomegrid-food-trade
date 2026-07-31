@@ -20,7 +20,7 @@ export default function Shop() {
     const [term, setTerm] = useState(q ?? "");
 
     // Local filtering since we load all products for now
-    const filteredProducts = products.filter(p => {
+    const filteredProducts = products.filter((p: { category?: { slug?: string }; name: string }) => {
         if (category && p.category?.slug !== category) return false;
         if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
         return true;
