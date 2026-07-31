@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/no-prefetch-link";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useCart } from "@/hooks/use-cart";

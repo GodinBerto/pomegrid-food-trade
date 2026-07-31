@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/no-prefetch-link";
 import { useRouter } from "next/navigation";
 import { useGetMyOrders } from "@/query/orders";
 import { formatGHS } from "@/lib/format";

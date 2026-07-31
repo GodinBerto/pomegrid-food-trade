@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { paymentsApi } from "@/api/payments";
 import { usePlaceOrder } from "@/query/orders";
 import { useCart } from "@/hooks/use-cart";
-import Link from "next/link";
+import Link from "@/components/no-prefetch-link";
 import { Loader2 } from "lucide-react";
 
 export default function VerifyPaymentPage() {

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/no-prefetch-link";
 import { ArrowRight, ShieldCheck, Truck, MessagesSquare } from "lucide-react";
 import { useListCategories } from "@/query/categories";
 import { useListWeeklyProducts } from "@/query/products";

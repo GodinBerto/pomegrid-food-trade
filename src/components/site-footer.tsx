@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/no-prefetch-link";
 
 export function SiteFooter() {
   return (
@@ -6,33 +6,71 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-4 lg:px-8">
         <div>
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary-foreground text-primary font-bold">P</div>
+            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary-foreground text-primary font-bold">
+              P
+            </div>
             <div>
               <div className="font-bold">Pomegrid</div>
               <div className="text-xs opacity-80">Food Trade</div>
             </div>
           </div>
-          <p className="mt-4 text-sm opacity-80 max-w-xs">Wholesale marketplace for Ghana's farm produce. Looking for fish? Visit aqua.pomegrid.com.</p>
+          <p className="mt-4 text-sm opacity-80 max-w-xs">
+            Wholesale marketplace for Ghana's farm produce. Looking for fish?
+            Visit aqua.pomegrid.com.
+          </p>
         </div>
         <div>
-          <div className="text-sm font-semibold uppercase tracking-wide opacity-80">Shop</div>
+          <div className="text-sm font-semibold uppercase tracking-wide opacity-80">
+            Shop
+          </div>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/shop" className="opacity-90 hover:opacity-100">All Products</Link></li>
-            <li><Link href="/whatsapp" className="opacity-90 hover:opacity-100">WhatsApp Groups</Link></li>
-            <li><Link href="/cart" className="opacity-90 hover:opacity-100">Cart</Link></li>
+            <li>
+              <Link href="/shop" className="opacity-90 hover:opacity-100">
+                All Products
+              </Link>
+            </li>
+            <li>
+              <Link href="/whatsapp" className="opacity-90 hover:opacity-100">
+                WhatsApp Groups
+              </Link>
+            </li>
+            <li>
+              <Link href="/cart" className="opacity-90 hover:opacity-100">
+                Cart
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
-          <div className="text-sm font-semibold uppercase tracking-wide opacity-80">Company</div>
+          <div className="text-sm font-semibold uppercase tracking-wide opacity-80">
+            Company
+          </div>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><Link href="/about" className="opacity-90 hover:opacity-100">About</Link></li>
-            <li><Link href="/contact" className="opacity-90 hover:opacity-100">Contact</Link></li>
+            <li>
+              <Link href="/about" className="opacity-90 hover:opacity-100">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="opacity-90 hover:opacity-100">
+                Contact
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
-          <div className="text-sm font-semibold uppercase tracking-wide opacity-80">Also from Pomegrid</div>
+          <div className="text-sm font-semibold uppercase tracking-wide opacity-80">
+            Also from Pomegrid
+          </div>
           <ul className="mt-3 space-y-2 text-sm">
-            <li><a href="https://aqua.pomegrid.com" className="opacity-90 hover:opacity-100">aqua.pomegrid.com — Fish wholesale</a></li>
+            <li>
+              <a
+                href="https://aqua.pomegrid.com"
+                className="opacity-90 hover:opacity-100"
+              >
+                aqua.pomegrid.com — Fish wholesale
+              </a>
+            </li>
           </ul>
         </div>
       </div>
