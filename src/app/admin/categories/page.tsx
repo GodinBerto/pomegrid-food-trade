@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Trash2, X } from "lucide-react";
 import { categoriesApi, type Category } from "@/api/categories";
@@ -10,6 +10,7 @@ import {
   useAdminListCategories,
   useAdminUpdateCategory,
 } from "@/query/categories";
+import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 type CategoryForm = {
   id?: number;
@@ -53,8 +54,11 @@ export default function AdminCategoriesPage() {
   const [loadingCategoryId, setLoadingCategoryId] = useState<number | null>(
     null,
   );
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  const saving = isCreating || isUpdating;
+  const saving = isCreating || isUpdating || isUploadingImage;
 
   async function openEdit(category: Category) {
     setLoadingCategoryId(category.id);
@@ -69,6 +73,8 @@ export default function AdminCategoriesPage() {
         image_url: full.image_url ?? "",
         is_active: isCategoryActive(full.is_active ?? true),
       });
+      setImagePreviewUrl(full.image_url ?? null);
+      setSelectedImageFile(null);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Could not load category",
@@ -85,15 +91,22 @@ export default function AdminCategoriesPage() {
       return;
     }
 
-    const payload = {
-      name: editing.name.trim(),
-      slug: editing.slug.trim(),
-      sort_order: Number(editing.sort_order ?? 0),
-      image_url: editing.image_url?.trim() || null,
-      is_active: editing.is_active ? 1 : 0,
-    };
-
     try {
+      setIsUploadingImage(true);
+      let imageUrl = editing.image_url?.trim() || null;
+
+      if (selectedImageFile) {
+        imageUrl = await uploadImageToCloudinary(selectedImageFile);
+      }
+
+      const payload = {
+        name: editing.name.trim(),
+        slug: editing.slug.trim(),
+        sort_order: Number(editing.sort_order ?? 0),
+        image_url: imageUrl,
+        is_active: editing.is_active ? 1 : 0,
+      };
+
       if (editing.id) {
         await updateCategory({ id: editing.id, data: payload });
         toast.success("Category updated");
@@ -102,10 +115,14 @@ export default function AdminCategoriesPage() {
         toast.success("Category created");
       }
       setEditing(null);
+      setSelectedImageFile(null);
+      setImagePreviewUrl(null);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to save category",
       );
+    } finally {
+      setIsUploadingImage(false);
     }
   }
 
@@ -224,14 +241,50 @@ export default function AdminCategoriesPage() {
                 placeholder="slug-like-this"
                 className="rounded-2xl bg-muted px-4 py-3 text-sm"
               />
-              <input
-                value={editing.image_url ?? ""}
-                onChange={(e) =>
-                  setEditing({ ...editing, image_url: e.target.value })
-                }
-                placeholder="Image URL"
-                className="rounded-2xl bg-muted px-4 py-3 text-sm"
-              />
+              <div className="grid gap-2 rounded-2xl bg-muted p-4">
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Category image
+                </label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-background px-3 py-2 text-sm font-semibold">
+                    Upload image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        if (!file) return;
+                        setSelectedImageFile(file);
+                        setImagePreviewUrl(URL.createObjectURL(file));
+                      }}
+                    />
+                  </label>
+                  <div className="rounded-2xl border border-border bg-background p-3">
+                    {imagePreviewUrl ? (
+                      <img
+                        src={imagePreviewUrl}
+                        alt="Selected category image"
+                        className="h-24 w-24 rounded-xl object-cover"
+                      />
+                    ) : editing.image_url ? (
+                      <img
+                        src={editing.image_url}
+                        alt="Current category image"
+                        className="h-24 w-24 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-xl bg-muted text-xs text-muted-foreground">
+                        No image selected
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Uploads go to Cloudinary and the final image URL will be sent
+                  to the backend.
+                </p>
+              </div>
               <label className="text-xs">
                 Sort order
                 <input

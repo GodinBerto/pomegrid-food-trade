@@ -80,9 +80,10 @@ export default function Checkout() {
 
       sessionStorage.setItem("pendingOrder", JSON.stringify(orderPayload));
 
+      const amountInKobo = Math.round(total * 100);
       const res = await initPaymentMut({
         email: user?.email || "customer@pomegrid.com",
-        amount: total,
+        amount: amountInKobo,
         callback_url: `${window.location.origin}/checkout/verify`,
       });
 
