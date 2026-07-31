@@ -1,4 +1,3 @@
-
 interface CloudinaryUploadResponse {
   secure_url: string;
   public_id: string;
@@ -16,7 +15,8 @@ type CloudinaryUploadFolder =
   | "products/images"
   | "product/videos";
 
-const CLOUDINARY_CLOUD_NAME = "dquhjbcvq";
+const CLOUDINARY_CLOUD_NAME =
+  process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
 const CLOUDINARY_UPLOAD_PRESET = "ml_default";
 const IMAGE_MAX_DIMENSION = 1600;
 const IMAGE_OUTPUT_QUALITY = 0.82;
@@ -28,7 +28,7 @@ const PRODUCT_VIDEOS_FOLDER: CloudinaryUploadFolder = "product/videos";
 const uploadToCloudinary = async (
   file: File,
   resourceType: CloudinaryResourceType,
-  folder: CloudinaryUploadFolder
+  folder: CloudinaryUploadFolder,
 ): Promise<string> => {
   const fileToUpload =
     resourceType === "image" ? await optimizeImageForUpload(file) : file;
@@ -66,7 +66,7 @@ const uploadToCloudinary = async (
 
       if (response.status === 400) {
         throw new Error(
-          `Upload failed: Invalid upload preset or configuration. Please check your Cloudinary settings. Error: ${errorText}`
+          `Upload failed: Invalid upload preset or configuration. Please check your Cloudinary settings. Error: ${errorText}`,
         );
       }
 
@@ -86,19 +86,19 @@ const uploadToCloudinary = async (
 };
 
 export const uploadProfileImageToCloudinary = async (
-  file: File
+  file: File,
 ): Promise<string> => {
   return uploadToCloudinary(file, "image", PROFILE_IMAGES_FOLDER);
 };
 
 export const uploadProductImageToCloudinary = async (
-  file: File
+  file: File,
 ): Promise<string> => {
   return uploadToCloudinary(file, "image", PRODUCT_IMAGES_FOLDER);
 };
 
 export const uploadProductVideoToCloudinary = async (
-  file: File
+  file: File,
 ): Promise<string> => {
   return uploadToCloudinary(file, "video", PRODUCT_VIDEOS_FOLDER);
 };
@@ -113,7 +113,7 @@ export const uploadVideoToCloudinary = async (file: File): Promise<string> => {
 
 const deleteFromCloudinary = async (
   mediaUrl: string,
-  resourceType: CloudinaryResourceType
+  resourceType: CloudinaryResourceType,
 ): Promise<boolean> => {
   try {
     const publicId = extractPublicIdFromUrl(mediaUrl);
@@ -122,7 +122,10 @@ const deleteFromCloudinary = async (
       return false;
     }
 
-    console.log(`Deleting ${resourceType} from Cloudinary, public_id:`, publicId);
+    console.log(
+      `Deleting ${resourceType} from Cloudinary, public_id:`,
+      publicId,
+    );
 
     const deleteUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/destroy`;
 
@@ -154,13 +157,13 @@ const deleteFromCloudinary = async (
 };
 
 export const deleteImageFromCloudinary = async (
-  imageUrl: string
+  imageUrl: string,
 ): Promise<boolean> => {
   return deleteFromCloudinary(imageUrl, "image");
 };
 
 export const deleteVideoFromCloudinary = async (
-  videoUrl: string
+  videoUrl: string,
 ): Promise<boolean> => {
   return deleteFromCloudinary(videoUrl, "video");
 };
@@ -186,11 +189,11 @@ export const cleanupCloudinaryMediaInBackground = ({
     ...uniqueVideoUrls.map((videoUrl) => deleteVideoFromCloudinary(videoUrl)),
   ]).then((results) => {
     const successCount = results.filter(
-      (result) => result.status === "fulfilled" && result.value
+      (result) => result.status === "fulfilled" && result.value,
     ).length;
 
     console.log(
-      `Background media cleanup completed: ${successCount}/${results.length} deleted`
+      `Background media cleanup completed: ${successCount}/${results.length} deleted`,
     );
   });
 };
@@ -219,7 +222,9 @@ const extractPublicIdFromUrl = (url: string): string | null => {
 
     publicIdParts[publicIdParts.length - 1] = sanitizedLastPart;
 
-    const publicId = publicIdParts.map((part) => decodeURIComponent(part)).join("/");
+    const publicId = publicIdParts
+      .map((part) => decodeURIComponent(part))
+      .join("/");
     return publicId || null;
   } catch (error) {
     console.error("Error extracting public_id from URL:", error);
@@ -241,7 +246,9 @@ const replaceFileExtension = (fileName: string, extension: string): string => {
   return `${baseName}.${extension}`;
 };
 
-const loadImageFromObjectUrl = (objectUrl: string): Promise<HTMLImageElement> => {
+const loadImageFromObjectUrl = (
+  objectUrl: string,
+): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
@@ -251,7 +258,10 @@ const loadImageFromObjectUrl = (objectUrl: string): Promise<HTMLImageElement> =>
 };
 
 const optimizeImageForUpload = async (file: File): Promise<File> => {
-  if (shouldSkipImageOptimization(file) || file.size < MIN_IMAGE_SIZE_TO_OPTIMIZE) {
+  if (
+    shouldSkipImageOptimization(file) ||
+    file.size < MIN_IMAGE_SIZE_TO_OPTIMIZE
+  ) {
     return file;
   }
 
@@ -300,7 +310,7 @@ const optimizeImageForUpload = async (file: File): Promise<File> => {
       {
         type: "image/webp",
         lastModified: Date.now(),
-      }
+      },
     );
 
     console.log("Image optimized before upload:", {
@@ -314,7 +324,10 @@ const optimizeImageForUpload = async (file: File): Promise<File> => {
 
     return optimizedFile;
   } catch (error) {
-    console.error("Image optimization failed. Uploading original image.", error);
+    console.error(
+      "Image optimization failed. Uploading original image.",
+      error,
+    );
     return file;
   } finally {
     URL.revokeObjectURL(objectUrl);

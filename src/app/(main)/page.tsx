@@ -145,7 +145,7 @@ export default function Home() {
               className="group relative block aspect-4/5 overflow-hidden rounded-3xl transition-transform hover:-translate-y-1"
             >
               <img
-                src={categoryImage(c.slug)}
+                src={categoryImage(c.image_url)}
                 alt={c.name}
                 loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"

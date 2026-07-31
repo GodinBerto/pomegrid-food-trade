@@ -8,20 +8,29 @@ export function formatGHS(value: number): string {
 
 export function categoryEmoji(slug: string | null | undefined): string {
   switch (slug) {
-    case "tubers": return "🥔";
-    case "grains-cereals": return "🌾";
-    case "legumes": return "🫘";
-    case "vegetables": return "🥬";
-    case "fruits": return "🍊";
-    case "spices-peppers": return "🌶️";
-    case "oils-fats": return "🫒";
-    case "processed-staples": return "🥣";
-    default: return "🧺";
+    case "tubers":
+      return "🥔";
+    case "grains-cereals":
+      return "🌾";
+    case "legumes":
+      return "🫘";
+    case "vegetables":
+      return "🥬";
+    case "fruits":
+      return "🍊";
+    case "spices-peppers":
+      return "🌶️";
+    case "oils-fats":
+      return "🫒";
+    case "processed-staples":
+      return "🥣";
+    default:
+      return "🧺";
   }
 }
 
 export function categoryImage(slug: string | null | undefined): string {
-  return "https://placehold.co/600x400";
+  return slug || "https://placehold.co/600x400";
 }
 
 export function productImage(product: {
@@ -32,7 +41,11 @@ export function productImage(product: {
   if (product.image_url) {
     if (typeof window !== "undefined") {
       const url = product.image_url;
-      if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+      if (
+        url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.startsWith("data:")
+      ) {
         return url;
       }
       return `${window.location.origin}${url.startsWith("/") ? url : `/${url}`}`;
@@ -42,6 +55,9 @@ export function productImage(product: {
   return categoryImage(product.categories?.slug ?? product.category?.slug);
 }
 
-export function productPrice(product: { price_ghs?: number | string; price?: number | string }) {
+export function productPrice(product: {
+  price_ghs?: number | string;
+  price?: number | string;
+}) {
   return Number(product.price_ghs ?? product.price ?? 0);
 }

@@ -7,6 +7,7 @@ import {
   productsApi,
   resolveImageUrl,
   type ProductImage,
+  type WeeklyProduct,
 } from "@/api/products";
 import {
   useAdminDeleteProduct,
@@ -77,7 +78,8 @@ export default function AdminProducts() {
   const [loadingImages, setLoadingImages] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  const { data: weeklyProducts = [] as any[] } = useListWeeklyProducts();
+  const { data: weeklyProducts = [] as WeeklyProduct[] } =
+    useListWeeklyProducts();
   const { mutateAsync: createWeeklyMut, isPending: isCreatingWeekly } =
     useCreateWeeklyProduct();
 

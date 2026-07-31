@@ -1,7 +1,9 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { paymentsApi } from "@/api/payments";
 import { usePlaceOrder } from "@/query/orders";
@@ -10,7 +12,6 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 
 export default function VerifyPaymentPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { mutateAsync: placeOrderMut } = usePlaceOrder();
   const { clear } = useCart();
@@ -25,8 +26,11 @@ export default function VerifyPaymentPage() {
     if (hasProcessed.current) return;
     hasProcessed.current = true;
 
-    const reference =
-      searchParams.get("reference") || searchParams.get("trxref");
+    const params =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams("");
+    const reference = params.get("reference") || params.get("trxref");
 
     if (!reference) {
       setStatus("error");
@@ -100,7 +104,7 @@ export default function VerifyPaymentPage() {
     }
 
     processPayment();
-  }, [searchParams, placeOrderMut, clear, router]);
+  }, [placeOrderMut, clear, router]);
 
   return (
     <div className="mx-auto max-w-lg px-4 py-24 text-center">

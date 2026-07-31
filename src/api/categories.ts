@@ -2,7 +2,7 @@ import { apiRequest } from "@/lib/apiClient";
 import { ApiResponse } from "./products";
 
 export type Category = {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   sort_order: number;

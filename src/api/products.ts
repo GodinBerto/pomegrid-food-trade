@@ -25,6 +25,15 @@ export type WeeklyProductPayload = {
   status?: "active" | "inactive";
 };
 
+export type WeeklyProduct = {
+  id?: number;
+  name: string;
+  description?: string;
+  price: number;
+  image_url?: string | null;
+  status?: "active" | "inactive" | string;
+};
+
 export type AdminProductPayload = {
   id?: string | number;
   name: string;
@@ -51,7 +60,10 @@ export const productsApi = {
     );
   },
   listWeeklyProducts: () =>
-    apiRequest<ApiResponse>("food_trade/weekly_products", "GET"),
+    apiRequest<ApiResponse<WeeklyProduct[]>>(
+      "food_trade/weekly_products",
+      "GET",
+    ),
   createWeeklyProduct: (payload: WeeklyProductPayload) =>
     apiRequest<ApiResponse<{ id: number }>>(
       "food_trade/weekly_products",

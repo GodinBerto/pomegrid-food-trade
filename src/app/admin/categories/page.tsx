@@ -51,9 +51,9 @@ export default function AdminCategoriesPage() {
     useAdminDeleteCategory();
 
   const [editing, setEditing] = useState<CategoryForm | null>(null);
-  const [loadingCategoryId, setLoadingCategoryId] = useState<number | null>(
-    null,
-  );
+  const [loadingCategoryId, setLoadingCategoryId] = useState<
+    string | number | null
+  >(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -63,10 +63,10 @@ export default function AdminCategoriesPage() {
   async function openEdit(category: Category) {
     setLoadingCategoryId(category.id);
     try {
-      const res = await categoriesApi.adminGetCategory(category.id);
+      const res = await categoriesApi.adminGetCategory(Number(category.id));
       const full = res.data ?? category;
       setEditing({
-        id: full.id,
+        id: Number(full.id),
         name: full.name,
         slug: full.slug,
         sort_order: Number(full.sort_order ?? 0),
@@ -130,7 +130,7 @@ export default function AdminCategoriesPage() {
     if (!confirm(`Delete "${category.name}"?`)) return;
 
     try {
-      await deleteCategory(category.id);
+      await deleteCategory(Number(category.id));
       toast.success("Category deleted");
     } catch (err) {
       toast.error(

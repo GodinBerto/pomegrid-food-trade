@@ -1,29 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useListCategories } from "@/query/categories";
 import { useListProducts } from "@/query/products";
 import { formatGHS, productImage, productPrice } from "@/lib/format";
 import { Search } from "lucide-react";
 
 export default function Shop() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const category = searchParams.get("category") || undefined;
-  const q = searchParams.get("q") || undefined;
+  const [category, setCategory] = useState<string | undefined>(undefined);
+  const [term, setTerm] = useState("");
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setCategory(params.get("category") || undefined);
+    setTerm(params.get("q") || "");
+  }, []);
   const { data: categories = [] as any[] } = useListCategories();
   const { data: products = [] as any[] } = useListProducts(); // Optionally use a more complex hook for filtering if available, filtering locally for now.
-
-  const [term, setTerm] = useState(q ?? "");
 
   // Local filtering since we load all products for now
   const filteredProducts = products.filter(
     (p: { categories?: { slug?: string }; name: string }) => {
       if (category && p.categories?.slug !== category) return false;
-      if (q && !p.name.toLowerCase().includes(q.toLowerCase())) return false;
+      if (term && !p.name.toLowerCase().includes(term.toLowerCase()))
+        return false;
       return true;
     },
   );

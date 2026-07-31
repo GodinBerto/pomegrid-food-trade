@@ -3,6 +3,7 @@ import {
   productsApi,
   type AdminProductPayload,
   type WeeklyProductPayload,
+  type WeeklyProduct,
 } from "@/api/products";
 
 export const useListProducts = (params?: { category?: string; q?: string }) => {
@@ -13,7 +14,7 @@ export const useListProducts = (params?: { category?: string; q?: string }) => {
 };
 
 export const useListWeeklyProducts = () => {
-  return useQuery({
+  return useQuery<WeeklyProduct[]>({
     queryKey: ["weekly_products"],
     queryFn: async () => (await productsApi.listWeeklyProducts()).data,
   });
