@@ -15,7 +15,7 @@ export type CartItem = {
   id: number;
   productId: string;
   name: string;
-  pricGhs: number;
+  price_ghs: number;
   qty: number;
   imageUrl?: string | null;
   isActive?: boolean;
@@ -26,7 +26,7 @@ export function mapCartItem(item: BackendCartItem): CartItem {
     id: item.id,
     productId: String(item.product_id),
     name: item.name,
-    pricGhs: Number(item.price_ghs),
+    price_ghs: Number(item.price_ghs),
     qty: item.quantity,
     imageUrl: item.image_url,
     isActive: item.is_active,
@@ -34,7 +34,8 @@ export function mapCartItem(item: BackendCartItem): CartItem {
 }
 
 export const cartApi = {
-  getCart: () => apiRequest<ApiResponse<BackendCartItem[]>>("food_trade/cart", "GET"),
+  getCart: () =>
+    apiRequest<ApiResponse<BackendCartItem[]>>("food_trade/cart", "GET"),
   addToCart: (data: { product_id: string | number; quantity: number }) =>
     apiRequest<ApiResponse>("food_trade/cart", "POST", data),
   updateCartItem: (itemId: number, data: { quantity: number }) =>

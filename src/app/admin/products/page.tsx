@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type DragEvent } from "react";
 import { toast } from "sonner";
-import { Plus, Trash2, X, ImagePlus } from "lucide-react";
+import { Plus, Trash2, X, ImagePlus, Sparkles } from "lucide-react";
 import {
   productsApi,
   resolveImageUrl,
@@ -12,6 +12,8 @@ import {
   useAdminDeleteProduct,
   useAdminListProducts,
   useAdminUpsertProduct,
+  useCreateWeeklyProduct,
+  useListWeeklyProducts,
 } from "@/query/products";
 import { useAdminListCategories } from "@/query/categories";
 import { formatGHS, productImage, productPrice } from "@/lib/format";
@@ -63,25 +65,41 @@ export default function AdminProducts() {
     useAdminDeleteProduct();
 
   const [editing, setEditing] = useState<ProductForm | null>(null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [existingImages, setExistingImages] = useState<ProductImage[]>([]);
+  const [imageItems, setImageItems] = useState<
+    Array<{
+      id?: number;
+      image_url: string;
+      file?: File;
+      previewUrl?: string;
+    }>
+  >([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [loadingImages, setLoadingImages] = useState(false);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
-  const saving = isUpserting || isUploadingImages;
+  const { data: weeklyProducts = [] as any[] } = useListWeeklyProducts();
+  const { mutateAsync: createWeeklyMut, isPending: isCreatingWeekly } =
+    useCreateWeeklyProduct();
+
+  const saving = isUpserting || isUploadingImages || isCreatingWeekly;
 
   useEffect(() => {
     return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+      imageItems.forEach((item) => {
+        if (item.previewUrl) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+      });
     };
-  }, [imagePreviews]);
+  }, [imageItems]);
 
   function resetImages() {
-    imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-    setImageFiles([]);
-    setImagePreviews([]);
-    setExistingImages([]);
+    imageItems.forEach((item) => {
+      if (item.previewUrl) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+    });
+    setImageItems([]);
   }
 
   function closeEditor() {
@@ -92,6 +110,34 @@ export default function AdminProducts() {
   function openCreate() {
     resetImages();
     setEditing(emptyProduct(cats[0]?.id));
+  }
+
+  async function handleSetWeeklyProduct(product: any) {
+    if (!product?.name) return;
+
+    const requestName = product.name.toLowerCase();
+    const alreadyWeekly = weeklyProducts.some(
+      (wp: any) => wp.name?.toLowerCase() === requestName,
+    );
+    if (alreadyWeekly) {
+      toast.success("This product is already a weekly product.");
+      return;
+    }
+
+    try {
+      await createWeeklyMut({
+        name: product.name,
+        description: product.description ?? "",
+        price: Number(productPrice(product)),
+        image_url: product.image_url ?? productImage(product),
+        status: "active",
+      });
+      toast.success("Product marked as weekly product.");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to mark weekly product",
+      );
+    }
   }
 
   async function openEdit(product: any) {
@@ -115,28 +161,29 @@ export default function AdminProducts() {
       const res = await productsApi.getProductImages(product.id);
       const loaded = res.data ?? [];
       if (loaded.length > 0) {
-        setExistingImages(loaded);
+        setImageItems(
+          loaded.map((image) => ({
+            id: image.id,
+            image_url: image.image_url,
+          })),
+        );
       } else if (product.image_url) {
-        setExistingImages([
+        setImageItems([
           {
             id: 0,
-            product_id: product.id,
             image_url: product.image_url,
-            sort_order: 0,
           },
         ]);
       } else {
-        setExistingImages([]);
+        setImageItems([]);
       }
     } catch {
-      setExistingImages(
+      setImageItems(
         product.image_url
           ? [
               {
                 id: 0,
-                product_id: product.id,
                 image_url: product.image_url,
-                sort_order: 0,
               },
             ]
           : [],
@@ -157,23 +204,42 @@ export default function AdminProducts() {
       return;
     }
 
-    setImageFiles((current) => [...current, ...selected]);
-    setImagePreviews((current) => [
-      ...current,
-      ...selected.map((file) => URL.createObjectURL(file)),
-    ]);
+    const newItems = selected.map((file) => ({
+      file,
+      image_url: "",
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setImageItems((current) => [...current, ...newItems]);
   }
 
-  function removeNewImage(index: number) {
-    URL.revokeObjectURL(imagePreviews[index]);
-    setImageFiles((current) => current.filter((_, i) => i !== index));
-    setImagePreviews((current) => current.filter((_, i) => i !== index));
+  function removeImage(index: number) {
+    setImageItems((current) => {
+      const item = current[index];
+      if (item?.previewUrl) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+      return current.filter((_, i) => i !== index);
+    });
   }
 
-  function removeExistingImage(imageId: number) {
-    setExistingImages((current) =>
-      current.filter((image) => image.id !== imageId),
-    );
+  function handleDragStart(index: number) {
+    setDragIndex(index);
+  }
+
+  function handleDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+  }
+
+  function handleDrop(index: number) {
+    if (dragIndex === null || dragIndex === index) return;
+    setImageItems((current) => {
+      const next = [...current];
+      const [moved] = next.splice(dragIndex, 1);
+      next.splice(index, 0, moved);
+      return next;
+    });
+    setDragIndex(null);
   }
 
   async function handleSave() {
@@ -183,27 +249,27 @@ export default function AdminProducts() {
       return;
     }
 
-    const keptExistingUrls = existingImages.map((image) => image.image_url);
-    const hasNewImages = imageFiles.length > 0;
-    const hasExistingImages = keptExistingUrls.length > 0;
-
-    if (!editing.id && !hasNewImages) {
+    const hasImages = imageItems.length > 0 || Boolean(editing.image_url);
+    if (!editing.id && !hasImages) {
       toast.error("Add at least one product image");
       return;
     }
-    if (editing.id && !hasNewImages && !hasExistingImages && !editing.image_url) {
+    if (editing.id && !hasImages) {
       toast.error("Keep or add at least one product image");
       return;
     }
 
     try {
       setIsUploadingImages(true);
-      const uploadedUrls = hasNewImages
-        ? await Promise.all(
-            imageFiles.map((file) => uploadProductImageToCloudinary(file)),
-          )
-        : [];
-      const imageUrls = [...keptExistingUrls, ...uploadedUrls];
+      const uploadedUrls = await Promise.all(
+        imageItems.map(async (item) => {
+          if (item.file) {
+            return uploadProductImageToCloudinary(item.file);
+          }
+          return item.image_url;
+        }),
+      );
+      const imageUrls = uploadedUrls.filter(Boolean) as string[];
 
       const payload = {
         id: editing.id,
@@ -285,6 +351,22 @@ export default function AdminProducts() {
             >
               {product.is_active ? "Active" : "Hidden"}
             </span>
+            <button
+              type="button"
+              onClick={() => handleSetWeeklyProduct(product)}
+              className={`grid h-9 w-9 place-items-center rounded-full transition ${
+                weeklyProducts.some(
+                  (wp) =>
+                    wp.name?.toLowerCase() === product.name?.toLowerCase(),
+                )
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:bg-muted"
+              }`}
+              title="Mark as weekly product"
+              disabled={isCreatingWeekly}
+            >
+              <Sparkles className="h-4 w-4" />
+            </button>
             <button
               onClick={() => openEdit(product)}
               className="rounded-full bg-background px-4 py-1.5 text-sm font-medium"
@@ -413,39 +495,38 @@ export default function AdminProducts() {
                   </p>
                 ) : (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {existingImages.map((image) => (
-                      <div key={image.id} className="relative">
-                        <img
-                          src={resolveImageUrl(image.image_url)}
-                          alt="Existing product"
-                          className="h-20 w-20 rounded-xl object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeExistingImage(image.id)}
-                          className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {imagePreviews.map((preview, index) => (
-                      <div key={preview} className="relative">
-                        <img
-                          src={preview}
-                          alt={`New product ${index + 1}`}
-                          className="h-20 w-20 rounded-xl object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeNewImage(index)}
-                          className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                    {!existingImages.length && !imagePreviews.length && (
+                    {imageItems.length > 0 ? (
+                      imageItems.map((image, index) => {
+                        const src =
+                          image.previewUrl ?? resolveImageUrl(image.image_url);
+                        return (
+                          <div
+                            key={`${image.id ?? image.previewUrl ?? index}-${index}`}
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragOver={handleDragOver}
+                            onDrop={() => handleDrop(index)}
+                            className="relative cursor-grab rounded-xl border border-border bg-background"
+                          >
+                            <img
+                              src={src}
+                              alt={`Product image ${index + 1}`}
+                              className="h-20 w-20 rounded-xl object-cover"
+                            />
+                            <div className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                              {index === 0 ? "Primary" : "Drag"}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    ) : (
                       <div className="flex h-20 w-full items-center justify-center rounded-xl border border-dashed border-input text-xs text-muted-foreground">
                         No images selected yet
                       </div>

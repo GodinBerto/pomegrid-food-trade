@@ -1,10 +1,12 @@
 import { apiRequest } from "@/lib/apiClient";
 
 export interface ApiResponse<T = any> {
-  ok: boolean;
+  ok?: boolean;
+  success?: boolean;
   message: string;
   data: T;
-  status_code: number;
+  status_code?: number;
+  status?: number;
 }
 
 export type ProductImage = {
@@ -13,6 +15,14 @@ export type ProductImage = {
   image_url: string;
   sort_order: number;
   created_at?: string;
+};
+
+export type WeeklyProductPayload = {
+  name: string;
+  description?: string;
+  price: number;
+  image_url?: string | null;
+  status?: "active" | "inactive";
 };
 
 export type AdminProductPayload = {
@@ -32,27 +42,49 @@ export type AdminProductPayload = {
 
 export const productsApi = {
   listProducts: (params?: { category?: string; q?: string }) => {
-    const query = new URLSearchParams(params as Record<string, string>).toString();
-    return apiRequest<ApiResponse>(`food_trade/products${query ? `?${query}` : ""}`, "GET");
+    const query = new URLSearchParams(
+      params as Record<string, string>,
+    ).toString();
+    return apiRequest<ApiResponse>(
+      `food_trade/products${query ? `?${query}` : ""}`,
+      "GET",
+    );
   },
   listWeeklyProducts: () =>
     apiRequest<ApiResponse>("food_trade/weekly_products", "GET"),
+  createWeeklyProduct: (payload: WeeklyProductPayload) =>
+    apiRequest<ApiResponse<{ id: number }>>(
+      "food_trade/weekly_products",
+      "POST",
+      payload,
+    ),
   getProductBySlug: (slug: string) =>
     apiRequest<ApiResponse>(`food_trade/products/${slug}`, "GET"),
   getProductImages: (productId: number | string) =>
-    apiRequest<ApiResponse<ProductImage[]>>(`food_trade/product/images/${productId}`, "GET"),
+    apiRequest<ApiResponse<ProductImage[]>>(
+      `food_trade/product/images/${productId}`,
+      "GET",
+    ),
 
   adminListProducts: () =>
     apiRequest<ApiResponse>("food_trade/admin/products", "GET"),
   adminUpsertProduct: (payload: AdminProductPayload) =>
-    apiRequest<ApiResponse<{ id: number }>>("food_trade/admin/products", "POST", payload),
+    apiRequest<ApiResponse<{ id: number }>>(
+      "food_trade/admin/products",
+      "POST",
+      payload,
+    ),
   adminDeleteProduct: (pid: number) =>
     apiRequest<ApiResponse>(`food_trade/admin/products/${pid}`, "DELETE"),
 };
 
 export function resolveImageUrl(imageUrl?: string | null) {
   if (!imageUrl) return "";
-  if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://") || imageUrl.startsWith("data:")) {
+  if (
+    imageUrl.startsWith("http://") ||
+    imageUrl.startsWith("https://") ||
+    imageUrl.startsWith("data:")
+  ) {
     return imageUrl;
   }
 

@@ -18,7 +18,11 @@ export type { CartItem };
 export function useCart() {
   const router = useRouter();
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
-  const { data: items = [], isFetched, isLoading } = useGetCart({ enabled: isLoggedIn });
+  const {
+    data: items = [],
+    isFetched,
+    isLoading,
+  } = useGetCart({ enabled: isLoggedIn });
 
   const addMut = useAddToCart();
   const updateMut = useUpdateCartItem();
@@ -60,7 +64,7 @@ export function useCart() {
     await clearMut.mutateAsync();
   }, [clearMut]);
 
-  const total = items.reduce((sum, item) => sum + item.pricGhs * item.qty, 0);
+  const total = items.reduce((sum, item) => sum + item.price_ghs * item.qty, 0);
   const count = items.reduce((sum, item) => sum + item.qty, 0);
   const hydrated = !isLoggedIn || isFetched;
   const isUpdating =

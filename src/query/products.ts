@@ -1,5 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { productsApi, type AdminProductPayload } from "@/api/products";
+import {
+  productsApi,
+  type AdminProductPayload,
+  type WeeklyProductPayload,
+} from "@/api/products";
 
 export const useListProducts = (params?: { category?: string; q?: string }) => {
   return useQuery({
@@ -15,6 +19,17 @@ export const useListWeeklyProducts = () => {
   });
 };
 
+export const useCreateWeeklyProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: WeeklyProductPayload) =>
+      productsApi.createWeeklyProduct(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weekly_products"] });
+    },
+  });
+};
+
 export const useGetProductBySlug = (slug: string) => {
   return useQuery({
     queryKey: ["product", slug],
@@ -26,7 +41,8 @@ export const useGetProductBySlug = (slug: string) => {
 export const useGetProductImages = (productId?: number | string | null) => {
   return useQuery({
     queryKey: ["product-images", productId],
-    queryFn: async () => (await productsApi.getProductImages(productId!)).data ?? [],
+    queryFn: async () =>
+      (await productsApi.getProductImages(productId!)).data ?? [],
     enabled: productId !== undefined && productId !== null && productId !== "",
   });
 };
@@ -41,13 +57,16 @@ export const useAdminListProducts = () => {
 export const useAdminUpsertProduct = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: AdminProductPayload) => productsApi.adminUpsertProduct(payload),
+    mutationFn: (payload: AdminProductPayload) =>
+      productsApi.adminUpsertProduct(payload),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
       const productId = data?.data?.id ?? variables.id;
       if (productId) {
-        queryClient.invalidateQueries({ queryKey: ["product-images", productId] });
+        queryClient.invalidateQueries({
+          queryKey: ["product-images", productId],
+        });
       }
     },
   });

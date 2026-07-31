@@ -6,6 +6,7 @@ export type Category = {
   name: string;
   slug: string;
   sort_order: number;
+  image_url?: string | null;
   is_active?: number | boolean;
 };
 
@@ -13,6 +14,7 @@ export type CategoryInput = {
   name: string;
   slug: string;
   sort_order?: number;
+  image_url?: string | null;
   is_active?: number | boolean;
 };
 
@@ -20,6 +22,7 @@ export type CategoryUpdateInput = {
   name?: string;
   slug?: string;
   sort_order?: number;
+  image_url?: string | null;
   is_active?: number | boolean;
 };
 
@@ -30,11 +33,25 @@ export const categoriesApi = {
   adminListCategories: () =>
     apiRequest<ApiResponse<Category[]>>("food_trade/admin/categories", "GET"),
   adminGetCategory: (categoryId: number) =>
-    apiRequest<ApiResponse<Category>>(`food_trade/admin/categories/${categoryId}`, "GET"),
+    apiRequest<ApiResponse<Category>>(
+      `food_trade/admin/categories/${categoryId}`,
+      "GET",
+    ),
   adminCreateCategory: (data: CategoryInput) =>
-    apiRequest<ApiResponse<{ id: number }>>("food_trade/admin/categories", "POST", data),
+    apiRequest<ApiResponse<{ id: number }>>(
+      "food_trade/admin/categories",
+      "POST",
+      data,
+    ),
   adminUpdateCategory: (categoryId: number, data: CategoryUpdateInput) =>
-    apiRequest<ApiResponse>(`food_trade/admin/categories/${categoryId}`, "PUT", data),
+    apiRequest<ApiResponse>(
+      `food_trade/admin/categories/${categoryId}`,
+      "PUT",
+      data,
+    ),
   adminDeleteCategory: (categoryId: number) =>
-    apiRequest<ApiResponse>(`food_trade/admin/categories/${categoryId}`, "DELETE"),
+    apiRequest<ApiResponse>(
+      `food_trade/admin/categories/${categoryId}`,
+      "DELETE",
+    ),
 };

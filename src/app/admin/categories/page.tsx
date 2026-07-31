@@ -16,6 +16,7 @@ type CategoryForm = {
   name: string;
   slug: string;
   sort_order: number;
+  image_url?: string;
   is_active: boolean;
 };
 
@@ -23,6 +24,7 @@ const emptyForm = (): CategoryForm => ({
   name: "",
   slug: "",
   sort_order: 0,
+  image_url: "",
   is_active: true,
 });
 
@@ -40,12 +42,17 @@ function isCategoryActive(value: Category["is_active"]) {
 
 export default function AdminCategoriesPage() {
   const { data: categories = [], isLoading } = useAdminListCategories();
-  const { mutateAsync: createCategory, isPending: isCreating } = useAdminCreateCategory();
-  const { mutateAsync: updateCategory, isPending: isUpdating } = useAdminUpdateCategory();
-  const { mutateAsync: deleteCategory, isPending: isDeleting } = useAdminDeleteCategory();
+  const { mutateAsync: createCategory, isPending: isCreating } =
+    useAdminCreateCategory();
+  const { mutateAsync: updateCategory, isPending: isUpdating } =
+    useAdminUpdateCategory();
+  const { mutateAsync: deleteCategory, isPending: isDeleting } =
+    useAdminDeleteCategory();
 
   const [editing, setEditing] = useState<CategoryForm | null>(null);
-  const [loadingCategoryId, setLoadingCategoryId] = useState<number | null>(null);
+  const [loadingCategoryId, setLoadingCategoryId] = useState<number | null>(
+    null,
+  );
 
   const saving = isCreating || isUpdating;
 
@@ -59,10 +66,13 @@ export default function AdminCategoriesPage() {
         name: full.name,
         slug: full.slug,
         sort_order: Number(full.sort_order ?? 0),
+        image_url: full.image_url ?? "",
         is_active: isCategoryActive(full.is_active ?? true),
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load category");
+      toast.error(
+        err instanceof Error ? err.message : "Could not load category",
+      );
     } finally {
       setLoadingCategoryId(null);
     }
@@ -79,6 +89,7 @@ export default function AdminCategoriesPage() {
       name: editing.name.trim(),
       slug: editing.slug.trim(),
       sort_order: Number(editing.sort_order ?? 0),
+      image_url: editing.image_url?.trim() || null,
       is_active: editing.is_active ? 1 : 0,
     };
 
@@ -92,7 +103,9 @@ export default function AdminCategoriesPage() {
       }
       setEditing(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save category");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save category",
+      );
     }
   }
 
@@ -103,7 +116,9 @@ export default function AdminCategoriesPage() {
       await deleteCategory(category.id);
       toast.success("Category deleted");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete category");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete category",
+      );
     }
   }
 
@@ -130,7 +145,23 @@ export default function AdminCategoriesPage() {
           </div>
         ) : (
           categories.map((category) => (
-            <div key={category.id} className="flex items-center gap-4 rounded-2xl bg-muted p-4">
+            <div
+              key={category.id}
+              className="flex items-center gap-4 rounded-2xl bg-muted p-4"
+            >
+              <div className="h-14 w-14 overflow-hidden rounded-xl bg-background">
+                {category.image_url ? (
+                  <img
+                    src={category.image_url}
+                    alt={category.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-xs text-muted-foreground">
+                    No image
+                  </div>
+                )}
+              </div>
               <div className="flex-1">
                 <div className="font-semibold">{category.name}</div>
                 <div className="text-xs text-muted-foreground">
@@ -160,7 +191,9 @@ export default function AdminCategoriesPage() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
           <div className="w-full max-w-lg rounded-3xl bg-background p-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold">{editing.id ? "Edit category" : "New category"}</h3>
+              <h3 className="text-lg font-bold">
+                {editing.id ? "Edit category" : "New category"}
+              </h3>
               <button
                 onClick={() => setEditing(null)}
                 className="grid h-9 w-9 place-items-center rounded-full bg-muted"
@@ -185,8 +218,18 @@ export default function AdminCategoriesPage() {
               />
               <input
                 value={editing.slug}
-                onChange={(e) => setEditing({ ...editing, slug: slugify(e.target.value) })}
+                onChange={(e) =>
+                  setEditing({ ...editing, slug: slugify(e.target.value) })
+                }
                 placeholder="slug-like-this"
+                className="rounded-2xl bg-muted px-4 py-3 text-sm"
+              />
+              <input
+                value={editing.image_url ?? ""}
+                onChange={(e) =>
+                  setEditing({ ...editing, image_url: e.target.value })
+                }
+                placeholder="Image URL"
                 className="rounded-2xl bg-muted px-4 py-3 text-sm"
               />
               <label className="text-xs">
@@ -195,7 +238,10 @@ export default function AdminCategoriesPage() {
                   type="number"
                   value={editing.sort_order}
                   onChange={(e) =>
-                    setEditing({ ...editing, sort_order: Number(e.target.value) || 0 })
+                    setEditing({
+                      ...editing,
+                      sort_order: Number(e.target.value) || 0,
+                    })
                   }
                   className="mt-1 w-full rounded-2xl bg-muted px-4 py-3 text-sm"
                 />
@@ -204,7 +250,9 @@ export default function AdminCategoriesPage() {
                 <input
                   type="checkbox"
                   checked={editing.is_active}
-                  onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })}
+                  onChange={(e) =>
+                    setEditing({ ...editing, is_active: e.target.checked })
+                  }
                 />
                 Active
               </label>
@@ -213,7 +261,11 @@ export default function AdminCategoriesPage() {
                 onClick={handleSave}
                 className="rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
               >
-                {saving ? "Saving…" : editing.id ? "Save changes" : "Create category"}
+                {saving
+                  ? "Saving…"
+                  : editing.id
+                    ? "Save changes"
+                    : "Create category"}
               </button>
             </div>
           </div>
