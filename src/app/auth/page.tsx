@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { authApi } from "@/api/auth";
 import { useLogin, useRegister } from "@/query/auth";
 import { useUserStore } from "@/store/store";
 
@@ -12,15 +13,16 @@ export default function AuthPage() {
     const [mode, setMode] = useState<"signin" | "signup">("signin");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
     const [fullName, setFullName] = useState("");
     const [phone, setPhone] = useState("");
     const [region, setRegion] = useState("");
     const [address, setAddress] = useState("");
-    
+
     const { mutateAsync: loginMut, isPending: isLoggingIn } = useLogin();
     const { mutateAsync: registerMut, isPending: isRegistering } = useRegister();
     const loading = isLoggingIn || isRegistering;
-    const { isLoggedIn } = useUserStore();
+    const { isLoggedIn, login } = useUserStore();
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -32,13 +34,25 @@ export default function AuthPage() {
         e.preventDefault();
         try {
             if (mode === "signup") {
+                if (password !== confirmPassword) {
+                    toast.error("Passwords do not match");
+                    return;
+                }
                 await registerMut({ full_name: fullName, email, password, phone, region, address });
-                toast.success("Account created — you're signed in!");
+                toast.success("Account created successfully. Please sign in to continue.");
+                setMode("signin");
+                setPassword("");
+                setConfirmPassword("");
+                return;
             } else {
                 await loginMut({ email, password });
+                const meRes = await authApi.getMe();
+                if (meRes?.data) {
+                    login(meRes.data);
+                }
                 toast.success("Welcome back!");
+                router.push("/");
             }
-            router.push("/");
         } catch (err: any) {
             toast.error(err.message || "Something went wrong");
         }
@@ -63,6 +77,9 @@ export default function AuthPage() {
                     )}
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" />
                     <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" />
+                    {mode === "signup" && (
+                        <input type="password" required minLength={6} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm Password" className="w-full rounded-2xl bg-background px-4 py-3 text-sm" />
+                    )}
                     <button disabled={loading} className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60">
                         {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
                     </button>

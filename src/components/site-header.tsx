@@ -3,15 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ShoppingBag, Menu, X } from "lucide-react";
+import { ShoppingBag, Menu, X, User as UserIcon, LogOut, Package } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
 import { useUserStore } from "@/store/store";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function SiteHeader() {
   const { count, hydrated } = useCart();
-  const { token, user } = useUserStore();
+  const { isLoggedIn, user, logout } = useUserStore();
   
-  const signedIn = !!token;
+  const signedIn = isLoggedIn;
   const isAdmin = user?.role === "admin" || user?.is_admin;
   
   const [open, setOpen] = useState(false);
@@ -56,7 +63,31 @@ export function SiteHeader() {
           </Link>
 
           {signedIn ? (
-            <Link href="/orders" className="hidden rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground sm:inline-block">My Orders</Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex h-10 w-10 items-center justify-center rounded-full bg-muted outline-none hover:bg-muted/80">
+                <UserIcon className="h-5 w-5 text-foreground" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex flex-col space-y-1 p-2">
+                  <p className="text-sm font-medium leading-none">{user?.full_name || user?.name || "User"}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/orders" className="cursor-pointer">
+                    <Package className="mr-2 h-4 w-4" />
+                    <span>My Orders</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => { logout(); window.location.href = "/"; }} 
+                  className="cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <Link href="/auth" className="hidden rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground sm:inline-block">Sign in</Link>
           )}

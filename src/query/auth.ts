@@ -19,10 +19,11 @@ export const useLogout = () => {
   });
 };
 
-export const useGetMe = () => {
+export const useGetMe = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ["auth", "me"],
     queryFn: authApi.getMe,
+    enabled: options?.enabled,
   });
 };
 
