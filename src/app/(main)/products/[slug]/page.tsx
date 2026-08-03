@@ -14,13 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { resolveImageUrl } from "@/api/products";
-import { useGetProductBySlug, useGetProductImages } from "@/query/products";
-import {
-  categoryImage,
-  formatGHS,
-  productImage,
-  productPrice,
-} from "@/lib/format";
+import { useGetProductBySlug } from "@/query/products";
+import { formatGHS, productPrice } from "@/lib/format";
 import { useCart } from "@/hooks/use-cart";
 
 export default function ProductPage({
@@ -30,8 +25,6 @@ export default function ProductPage({
 }) {
   const { slug } = use(params);
   const { data: product, isLoading } = useGetProductBySlug(slug);
-  const { data: productImages = [], isLoading: imagesLoading } =
-    useGetProductImages(product?.id);
   const { add, isUpdating } = useCart();
   const router = useRouter();
 
@@ -49,9 +42,9 @@ export default function ProductPage({
 
   useEffect(() => {
     setActive(0);
-  }, [product?.id, productImages.length]);
+  }, [product?.id, product?.images?.length]);
 
-  if (isLoading || imagesLoading) {
+  if (isLoading) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
         Loading product...
@@ -73,16 +66,9 @@ export default function ProductPage({
     );
   }
 
-  const galleryFromApi = productImages
+  const gallery = (product.images ?? [])
     .map((image) => resolveImageUrl(image.image_url))
-    .filter(Boolean);
-  const fallbackGallery = Array.from(
-    new Set([
-      productImage(product),
-      categoryImage(product.category?.slug ?? product.categories?.slug),
-    ]),
-  );
-  const gallery = galleryFromApi.length > 0 ? galleryFromApi : fallbackGallery;
+    .filter((url): url is string => Boolean(url));
 
   const waMsg = encodeURIComponent(
     `Hi Pomegrid, I'm interested in ${product.name} (${product.unit}). Please share availability.`,
@@ -129,13 +115,23 @@ export default function ProductPage({
               ))}
             </div>
           )}
-          <div className="flex-1 overflow-hidden rounded-3xl bg-muted">
-            <img
-              src={gallery[active] ?? gallery[0]}
-              alt={product.name}
-              className="aspect-square w-full object-cover"
-            />
-          </div>
+          {gallery.length > 0 ? (
+            <div className="flex-1 overflow-hidden rounded-3xl bg-muted">
+              <img
+                src={gallery[active] ?? gallery[0]}
+                alt={product.name}
+                className="aspect-square w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex flex-1 overflow-hidden rounded-3xl bg-muted">
+              <img
+                src={resolveImageUrl(product.image_url)}
+                alt={product.name}
+                className="aspect-square w-full object-cover"
+              />
+            </div>
+          )}
         </div>
 
         <div>

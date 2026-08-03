@@ -48,6 +48,7 @@ export type ProductDetail = ProductListItem & {
   min_order_qty: number;
   stock_qty: number;
   description?: string;
+  images?: ProductImage[];
 };
 
 export type AdminProduct = ProductListItem & {

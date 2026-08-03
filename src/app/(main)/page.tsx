@@ -5,7 +5,7 @@ import { ArrowRight, ShieldCheck, Truck, MessagesSquare } from "lucide-react";
 import { useListCategories } from "@/query/categories";
 import { useListWeeklyProducts } from "@/query/products";
 import { categoryImage, formatGHS, productImage } from "@/lib/format";
-import { ProductItem } from "./shop/page";
+import { ProductListItem } from "@/api/products";
 
 export default function Home() {
   const { data: categories = [] as any[] } = useListCategories();
@@ -92,7 +92,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {featured.map((p: ProductItem) => (
+          {featured.map((p: ProductListItem) => (
             <Link
               key={p.id}
               href={`/products/${p.slug}`}

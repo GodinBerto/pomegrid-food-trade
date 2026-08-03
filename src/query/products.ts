@@ -53,15 +53,6 @@ export const useGetProductBySlug = (slug: string) => {
   });
 };
 
-export const useGetProductImages = (productId?: number | string | null) => {
-  return useQuery<ProductImage[]>({
-    queryKey: ["product-images", productId],
-    queryFn: async () =>
-      (await productsApi.getProductImages(productId!)).data ?? [],
-    enabled: productId !== undefined && productId !== null && productId !== "",
-  });
-};
-
 export const useAdminListProducts = () => {
   return useQuery<AdminProduct[]>({
     queryKey: ["admin-products"],
