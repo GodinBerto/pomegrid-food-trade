@@ -3,22 +3,21 @@
 import Link from "@/components/no-prefetch-link";
 import { useAdminListOrders } from "@/query/orders";
 import { useAdminListProducts } from "@/query/products";
-import { useListProducts } from "@/query/products";
 import { formatGHS } from "@/lib/format";
+import type { AdminProduct } from "@/api/products";
+import type { UserOrder } from "@/api/orders";
 
 export default function AdminOverview() {
-  const { data: orders = [] as any[] } = useAdminListOrders();
-  const { data: products = [] as any[] } = useAdminListProducts();
+  const { data: orders = [] } = useAdminListOrders();
+  const { data: products = [] } = useAdminListProducts();
 
   const revenue = orders.reduce(
-    (sum: number, order: { total_ghs?: number; total_price?: number }) => {
+    (sum: number, order: UserOrder) => {
       return sum + Number(order.total_ghs ?? order.total_price ?? 0);
     },
     0,
   );
-  const pending = orders.filter(
-    (order: { status: string }) => order.status === "pending",
-  ).length;
+  const pending = orders.filter((order) => order.status === "pending").length;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -32,14 +31,14 @@ export default function AdminOverview() {
       <Stat
         label="Active products"
         value={products
-          .filter((p: { is_active?: boolean }) => p.is_active)
+          .filter((p: AdminProduct) => Boolean(p.is_active))
           .length.toString()}
       />
 
       <div className="col-span-full rounded-3xl bg-muted p-6">
         <h2 className="text-lg font-semibold">Recent orders</h2>
         <div className="mt-4 space-y-2">
-          {orders.slice(0, 5).map((o: any) => (
+          {orders.slice(0, 5).map((o: UserOrder) => (
             <div
               key={o.id}
               className="flex items-center justify-between rounded-2xl bg-background p-4 text-sm"

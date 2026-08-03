@@ -1,13 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   productsApi,
+  type AdminProduct,
   type AdminProductPayload,
+  type ProductDetail,
+  type ProductListItem,
   type WeeklyProductPayload,
   type WeeklyProduct,
 } from "@/api/products";
 
 export const useListProducts = (params?: { category?: string; q?: string }) => {
-  return useQuery({
+  return useQuery<ProductListItem[]>({
     queryKey: ["products", params],
     queryFn: async () => (await productsApi.listProducts(params)).data,
   });
@@ -31,8 +34,19 @@ export const useCreateWeeklyProduct = () => {
   });
 };
 
+export const useDeleteWeeklyProduct = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (productId: number) =>
+      productsApi.deleteWeeklyProduct(productId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weekly_products"] });
+    },
+  });
+};
+
 export const useGetProductBySlug = (slug: string) => {
-  return useQuery({
+  return useQuery<ProductDetail | undefined>({
     queryKey: ["product", slug],
     queryFn: async () => (await productsApi.getProductBySlug(slug)).data,
     enabled: !!slug,
@@ -40,7 +54,7 @@ export const useGetProductBySlug = (slug: string) => {
 };
 
 export const useGetProductImages = (productId?: number | string | null) => {
-  return useQuery({
+  return useQuery<ProductImage[]>({
     queryKey: ["product-images", productId],
     queryFn: async () =>
       (await productsApi.getProductImages(productId!)).data ?? [],
@@ -49,7 +63,7 @@ export const useGetProductImages = (productId?: number | string | null) => {
 };
 
 export const useAdminListProducts = () => {
-  return useQuery({
+  return useQuery<AdminProduct[]>({
     queryKey: ["admin-products"],
     queryFn: async () => (await productsApi.adminListProducts()).data,
   });

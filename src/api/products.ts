@@ -1,6 +1,6 @@
 import { apiRequest } from "@/lib/apiClient";
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   ok?: boolean;
   success?: boolean;
   message: string;
@@ -17,12 +17,50 @@ export type ProductImage = {
   created_at?: string;
 };
 
+export type ProductListItem = {
+  id: number | string;
+  name: string;
+  slug: string;
+  description?: string;
+  price_ghs?: number | string;
+  price?: number | string;
+  unit: string;
+  min_order_qty?: number | string;
+  stock_qty?: number | string;
+  is_active?: boolean | number;
+  category_id?: string | number | null;
+  image_url?: string | null;
+  categories?: {
+    slug?: string;
+    name?: string;
+  };
+  category?: {
+    slug?: string;
+    name?: string;
+  };
+};
+
+export type ProductDetail = ProductListItem & {
+  id: number | string;
+  name: string;
+  slug: string;
+  unit: string;
+  min_order_qty: number;
+  stock_qty: number;
+  description?: string;
+};
+
+export type AdminProduct = ProductListItem & {
+  id: number | string;
+};
+
 export type WeeklyProductPayload = {
   name: string;
   description?: string;
   price: number;
   image_url?: string | null;
   status?: "active" | "inactive";
+  category_id?: string | number | null;
 };
 
 export type WeeklyProduct = {
@@ -54,7 +92,7 @@ export const productsApi = {
     const query = new URLSearchParams(
       params as Record<string, string>,
     ).toString();
-    return apiRequest<ApiResponse>(
+    return apiRequest<ApiResponse<ProductListItem[]>>(
       `food_trade/products${query ? `?${query}` : ""}`,
       "GET",
     );
@@ -70,8 +108,16 @@ export const productsApi = {
       "POST",
       payload,
     ),
+  deleteWeeklyProduct: (productId: number) =>
+    apiRequest<ApiResponse>(
+      `food_trade/weekly_products/${productId}`,
+      "DELETE",
+    ),
   getProductBySlug: (slug: string) =>
-    apiRequest<ApiResponse>(`food_trade/products/${slug}`, "GET"),
+    apiRequest<ApiResponse<ProductDetail>>(
+      `food_trade/products/${slug}`,
+      "GET",
+    ),
   getProductImages: (productId: number | string) =>
     apiRequest<ApiResponse<ProductImage[]>>(
       `food_trade/product/images/${productId}`,
@@ -79,7 +125,7 @@ export const productsApi = {
     ),
 
   adminListProducts: () =>
-    apiRequest<ApiResponse>("food_trade/admin/products", "GET"),
+    apiRequest<ApiResponse<AdminProduct[]>>("food_trade/admin/products", "GET"),
   adminUpsertProduct: (payload: AdminProductPayload) =>
     apiRequest<ApiResponse<{ id: number }>>(
       "food_trade/admin/products",

@@ -5,15 +5,20 @@ export type OrderItem = {
   id: number;
   product_name: string;
   qty: number;
-  unit_price_ghs: number;
+  unit_price: number;
+  unit_price_ghs?: number;
 };
 
 export type UserOrder = {
   id: number;
   status: string;
-  total_ghs: number;
+  total_price?: number;
+  total_ghs?: number;
   created_at: string;
   delivery_region: string | null;
+  delivery_address?: string | null;
+  contact_phone?: string | null;
+  notes?: string | null;
   order_items: OrderItem[];
 };
 
@@ -25,6 +30,6 @@ export const ordersApi = {
 
   adminListOrders: () =>
     apiRequest<ApiResponse>("food_trade/admin/orders", "GET"),
-  adminUpdateOrderStatus: (data: { id: number; status: string }) =>
+  adminUpdateOrderStatus: (data: { id: string | number; status: string }) =>
     apiRequest<ApiResponse>("food_trade/admin/orders/status", "POST", data),
 };

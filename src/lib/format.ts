@@ -35,24 +35,9 @@ export function categoryImage(slug: string | null | undefined): string {
 
 export function productImage(product: {
   image_url?: string | null;
-  categories?: { slug: string } | null;
-  category?: { slug?: string } | null;
-}): string {
-  if (product.image_url) {
-    if (typeof window !== "undefined") {
-      const url = product.image_url;
-      if (
-        url.startsWith("http://") ||
-        url.startsWith("https://") ||
-        url.startsWith("data:")
-      ) {
-        return url;
-      }
-      return `${window.location.origin}${url.startsWith("/") ? url : `/${url}`}`;
-    }
-    return product.image_url;
-  }
-  return categoryImage(product.categories?.slug ?? product.category?.slug);
+  image?: string | null;
+}) {
+  return product.image_url || product.image || "https://placehold.co/600x400";
 }
 
 export function productPrice(product: {

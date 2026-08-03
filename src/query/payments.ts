@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { paymentsApi } from "@/api/payments";
+import { paymentsApi, type PaymentVerificationResponse } from "@/api/payments";
 
 export const useInitializePayment = () => {
   return useMutation({
@@ -8,7 +8,7 @@ export const useInitializePayment = () => {
 };
 
 export const useVerifyPayment = (reference: string) => {
-  return useQuery({
+  return useQuery<PaymentVerificationResponse | undefined>({
     queryKey: ["payment", reference],
     queryFn: async () => (await paymentsApi.verifyPayment(reference)).data,
     enabled: !!reference,

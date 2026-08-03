@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ordersApi } from "@/api/orders";
+import { ordersApi, type UserOrder } from "@/api/orders";
 import { CART_QUERY_KEY } from "@/query/cart";
 import { useUserStore } from "@/store/store";
 
@@ -20,7 +20,7 @@ export const usePlaceOrder = () => {
 export const useGetMyOrders = () => {
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
 
-  return useQuery({
+  return useQuery<UserOrder[]>({
     queryKey: MY_ORDERS_QUERY_KEY,
     queryFn: async () => (await ordersApi.getMyOrders()).data ?? [],
     enabled: isLoggedIn,
@@ -28,9 +28,9 @@ export const useGetMyOrders = () => {
 };
 
 export const useAdminListOrders = () => {
-  return useQuery({
+  return useQuery<UserOrder[]>({
     queryKey: ["admin-orders"],
-    queryFn: async () => (await ordersApi.adminListOrders()).data,
+    queryFn: async () => (await ordersApi.adminListOrders()).data as UserOrder[],
   });
 };
 

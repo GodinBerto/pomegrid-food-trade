@@ -1,43 +1,62 @@
 "use client";
 
 import Link from "@/components/no-prefetch-link";
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useListCategories } from "@/query/categories";
 import { useListProducts } from "@/query/products";
-import { formatGHS, productImage, productPrice } from "@/lib/format";
+import { formatGHS, productPrice } from "@/lib/format";
 import { Search } from "lucide-react";
+import { resolveImageUrl, type ProductListItem } from "@/api/products";
+
+type CategoryItem = {
+  id: string | number;
+  name: string;
+  slug: string;
+};
 
 export default function Shop() {
   const router = useRouter();
-  const [category, setCategory] = useState<string | undefined>(undefined);
-  const [term, setTerm] = useState("");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    setCategory(params.get("category") || undefined);
-    setTerm(params.get("q") || "");
-  }, []);
-  const { data: categories = [] as any[] } = useListCategories();
-  const { data: products = [] as any[] } = useListProducts(); // Optionally use a more complex hook for filtering if available, filtering locally for now.
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category") || undefined;
+  const [term, setTerm] = useState(searchParams.get("q") || "");
+  const { data: categories = [] as CategoryItem[] } = useListCategories();
+  const { data: products = [] as ProductListItem[] } = useListProducts(); // Optionally use a more complex hook for filtering if available, filtering locally for now.
 
   // Local filtering since we load all products for now
-  const filteredProducts = products.filter(
-    (p: { categories?: { slug?: string }; name: string }) => {
-      if (category && p.categories?.slug !== category) return false;
-      if (term && !p.name.toLowerCase().includes(term.toLowerCase()))
-        return false;
-      return true;
-    },
-  );
+  const filteredProducts = products.filter((p) => {
+    if (category && p.categories?.slug !== category) return false;
+    if (term && !p.name.toLowerCase().includes(term.toLowerCase()))
+      return false;
+    return true;
+  });
+
+  const buildShopUrl = (nextCategory?: string, nextTerm?: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (nextCategory) {
+      params.set("category", nextCategory);
+    } else {
+      params.delete("category");
+    }
+
+    if (nextTerm) {
+      params.set("q", nextTerm);
+    } else {
+      params.delete("q");
+    }
+
+    const query = params.toString();
+    return `/shop${query ? `?${query}` : ""}`;
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (term) params.set("q", term);
-    router.push(`/shop?${params.toString()}`);
+    router.push(buildShopUrl(category, term), { scroll: false });
+  };
+
+  const handleCategorySelect = (nextCategory?: string) => {
+    router.push(buildShopUrl(nextCategory, term), { scroll: false });
   };
 
   return (
@@ -67,13 +86,24 @@ export default function Shop() {
       </form>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link href="/shop" className={pill(!category)}>
+        <Link
+          href={buildShopUrl(undefined, term)}
+          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+            e.preventDefault();
+            handleCategorySelect(undefined);
+          }}
+          className={pill(!category)}
+        >
           All
         </Link>
-        {categories.map((c: any) => (
+        {categories.map((c) => (
           <Link
             key={c.id}
-            href={`/shop?category=${c.slug}`}
+            href={buildShopUrl(c.slug, term)}
+            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+              e.preventDefault();
+              handleCategorySelect(c.slug);
+            }}
             className={pill(category === c.slug)}
           >
             {c.name}
@@ -82,7 +112,7 @@ export default function Shop() {
       </div>
 
       <div className="mt-8 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-        {filteredProducts.map((p: any) => (
+        {filteredProducts.map((p) => (
           <Link
             key={p.id}
             href={`/products/${p.slug}`}
@@ -90,20 +120,22 @@ export default function Shop() {
           >
             <div className="relative aspect-square overflow-hidden bg-muted">
               <img
-                src={productImage(p)}
+                src={resolveImageUrl(p.image_url)}
                 alt={p.name}
                 loading="lazy"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
-              <div className="absolute left-3 top-3 rounded-full bg-background/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary backdrop-blur">
-                {p.category?.name ?? "Produce"}
+              <div className="absolute left-3 top-3 rounded-full bg-background/95 px-3 py-1 text-[11px] font-semibold tracking-wide text-primary backdrop-blur">
+                {p.categories?.name ?? "Produce"}
               </div>
             </div>
             <div className="flex flex-1 flex-col gap-1 p-4">
               <div className="text-sm font-bold leading-snug line-clamp-2">
                 {p.name}
               </div>
-              <div className="text-xs text-muted-foreground">per {p.unit}</div>
+              <div className="text-xs text-muted-foreground">
+                per {p.unit ?? "unit"}
+              </div>
               <div className="mt-3 flex items-end justify-between">
                 <div className="text-lg font-extrabold text-primary">
                   {formatGHS(productPrice(p))}

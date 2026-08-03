@@ -5,6 +5,7 @@ import { ArrowRight, ShieldCheck, Truck, MessagesSquare } from "lucide-react";
 import { useListCategories } from "@/query/categories";
 import { useListWeeklyProducts } from "@/query/products";
 import { categoryImage, formatGHS, productImage } from "@/lib/format";
+import { ProductItem } from "./shop/page";
 
 export default function Home() {
   const { data: categories = [] as any[] } = useListCategories();
@@ -91,7 +92,7 @@ export default function Home() {
           </Link>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
-          {featured.map((p: any) => (
+          {featured.map((p: ProductItem) => (
             <Link
               key={p.id}
               href={`/products/${p.slug}`}
@@ -104,9 +105,6 @@ export default function Home() {
                   loading="lazy"
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-                <div className="absolute left-3 top-3 rounded-full bg-background/95 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-primary backdrop-blur">
-                  {p.category?.name ?? "Produce"}
-                </div>
               </div>
               <div className="flex flex-1 flex-col gap-1 p-4">
                 <div className="text-sm font-bold leading-snug line-clamp-2">

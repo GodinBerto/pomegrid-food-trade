@@ -6,7 +6,7 @@ import { Plus, Trash2, X, ImagePlus, Sparkles } from "lucide-react";
 import {
   productsApi,
   resolveImageUrl,
-  type ProductImage,
+  type AdminProduct,
   type WeeklyProduct,
 } from "@/api/products";
 import {
@@ -14,6 +14,7 @@ import {
   useAdminListProducts,
   useAdminUpsertProduct,
   useCreateWeeklyProduct,
+  useDeleteWeeklyProduct,
   useListWeeklyProducts,
 } from "@/query/products";
 import { useAdminListCategories } from "@/query/categories";
@@ -21,7 +22,7 @@ import { formatGHS, productImage, productPrice } from "@/lib/format";
 import { uploadProductImageToCloudinary } from "@/lib/cloudinary";
 
 type ProductForm = {
-  id?: number;
+  id?: number | string;
   name: string;
   slug: string;
   description?: string;
@@ -82,6 +83,7 @@ export default function AdminProducts() {
     useListWeeklyProducts();
   const { mutateAsync: createWeeklyMut, isPending: isCreatingWeekly } =
     useCreateWeeklyProduct();
+  const { mutateAsync: deleteWeeklyMut } = useDeleteWeeklyProduct();
 
   const saving = isUpserting || isUploadingImages || isCreatingWeekly;
 
@@ -114,15 +116,25 @@ export default function AdminProducts() {
     setEditing(emptyProduct(cats[0]?.id));
   }
 
-  async function handleSetWeeklyProduct(product: any) {
+  async function handleSetWeeklyProduct(product: AdminProduct) {
     if (!product?.name) return;
 
     const requestName = product.name.toLowerCase();
-    const alreadyWeekly = weeklyProducts.some(
-      (wp: any) => wp.name?.toLowerCase() === requestName,
+    const existingWeekly = weeklyProducts.find(
+      (wp: WeeklyProduct) => wp.name?.toLowerCase() === requestName,
     );
-    if (alreadyWeekly) {
-      toast.success("This product is already a weekly product.");
+
+    if (existingWeekly?.id) {
+      try {
+        await deleteWeeklyMut(existingWeekly.id);
+        toast.success("Weekly product removed.");
+      } catch (err) {
+        toast.error(
+          err instanceof Error
+            ? err.message
+            : "Failed to remove weekly product",
+        );
+      }
       return;
     }
 
@@ -133,6 +145,7 @@ export default function AdminProducts() {
         price: Number(productPrice(product)),
         image_url: product.image_url ?? productImage(product),
         status: "active",
+        category_id: product.category_id,
       });
       toast.success("Product marked as weekly product.");
     } catch (err) {
@@ -142,7 +155,7 @@ export default function AdminProducts() {
     }
   }
 
-  async function openEdit(product: any) {
+  async function openEdit(product: AdminProduct) {
     resetImages();
     setEditing({
       id: product.id,
@@ -160,6 +173,12 @@ export default function AdminProducts() {
 
     setLoadingImages(true);
     try {
+      if (product.id === undefined || product.id === null) {
+        setImageItems([]);
+        setLoadingImages(false);
+        return;
+      }
+
       const res = await productsApi.getProductImages(product.id);
       const loaded = res.data ?? [];
       if (loaded.length > 0) {
@@ -323,7 +342,7 @@ export default function AdminProducts() {
       </div>
 
       <div className="mt-6 space-y-2">
-        {products.map((product: any) => (
+        {products.map((product: AdminProduct) => (
           <div
             key={product.id}
             className="flex items-center gap-4 rounded-2xl bg-muted p-4"
@@ -356,7 +375,7 @@ export default function AdminProducts() {
             <button
               type="button"
               onClick={() => handleSetWeeklyProduct(product)}
-              className={`grid h-9 w-9 place-items-center rounded-full transition ${
+              className={`grid h-9 w-9 place-items-center rounded-full transition cursor-pointer ${
                 weeklyProducts.some(
                   (wp) =>
                     wp.name?.toLowerCase() === product.name?.toLowerCase(),
@@ -450,7 +469,7 @@ export default function AdminProducts() {
                 className="rounded-2xl bg-muted px-4 py-3 text-sm"
               >
                 <option value="">— No category —</option>
-                {cats.map((category: any) => (
+                {cats.map((category: { id: string | number; name: string }) => (
                   <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
