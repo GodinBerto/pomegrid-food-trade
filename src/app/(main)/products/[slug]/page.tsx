@@ -199,7 +199,12 @@ export default function ProductPage({
                 {isUpdating ? "Adding…" : "Add to cart"}
               </button>
             ) : (
-              <div className="text-sm text-muted-foreground">Out of stock</div>
+              <button
+                disabled
+                className="inline-flex items-center gap-2 rounded-full bg-muted px-6 py-3 text-sm font-semibold text-muted-foreground"
+              >
+                <ShoppingBag className="h-4 w-4" /> Out of stock
+              </button>
             )}
             <a
               href={waUrl}
