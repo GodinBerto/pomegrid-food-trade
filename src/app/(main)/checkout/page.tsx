@@ -14,7 +14,7 @@ export default function Checkout() {
   const { mutateAsync: initPaymentMut } = useInitializePayment();
   const { user } = useUserStore();
 
-  const activeRegions = ["Greater Accra", "Ashanti", "Northern"];
+  const activeRegions = ["Western Region - Takoradi"];
   const regionList = activeRegions;
 
   const [phone, setPhone] = useState(user?.phone ?? "");
