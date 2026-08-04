@@ -73,7 +73,7 @@ export default function ProductPage({
   const waMsg = encodeURIComponent(
     `Hi Pomegrid, I'm interested in ${product.name} (${product.unit}). Please share availability.`,
   );
-  const waUrl = `https://wa.me/?text=${waMsg}`;
+  const waUrl = `https://whatsapp.com/channel/0029Vb8Rr4lKGGG8UpP1lh3q?text=${waMsg}`;
 
   async function handleAdd() {
     try {
@@ -191,7 +191,7 @@ export default function ProductPage({
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={handleAdd}
-              disabled={isUpdating}
+              disabled={isUpdating || product.stock_qty === 0}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
             >
               <ShoppingBag className="h-4 w-4" />{" "}

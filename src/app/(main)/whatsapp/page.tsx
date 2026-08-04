@@ -13,7 +13,7 @@ const groups = [
     id: 1,
     region: "Western Region",
     description: "Sekondi-Takoradi and surrounding areas",
-    invite_url: "https://chat.whatsapp.com/sample",
+    invite_url: "https://whatsapp.com/channel/0029Vb8Rr4lKGGG8UpP1lh3q",
   },
   {
     id: 2,
