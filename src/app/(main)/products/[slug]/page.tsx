@@ -73,7 +73,7 @@ export default function ProductPage({
   const waMsg = encodeURIComponent(
     `Hi Pomegrid, I'm interested in ${product.name} (${product.unit}). Please share availability.`,
   );
-  const waUrl = `https://whatsapp.com/channel/0029Vb8Rr4lKGGG8UpP1lh3q?text=${waMsg}`;
+  const waUrl = `https://wa.me/0531209142?text=${waMsg}`;
 
   async function handleAdd() {
     try {
@@ -189,14 +189,18 @@ export default function ProductPage({
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              onClick={handleAdd}
-              disabled={isUpdating || product.stock_qty === 0}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
-            >
-              <ShoppingBag className="h-4 w-4" />{" "}
-              {isUpdating ? "Adding…" : "Add to cart"}
-            </button>
+            {product.stock_qty > 0 ? (
+              <button
+                onClick={handleAdd}
+                disabled={isUpdating || product.stock_qty === 0}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              >
+                <ShoppingBag className="h-4 w-4" />{" "}
+                {isUpdating ? "Adding…" : "Add to cart"}
+              </button>
+            ) : (
+              <div className="text-sm text-muted-foreground">Out of stock</div>
+            )}
             <a
               href={waUrl}
               target="_blank"

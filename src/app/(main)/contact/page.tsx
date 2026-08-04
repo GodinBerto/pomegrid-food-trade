@@ -20,7 +20,7 @@ export default function Contact() {
           <Phone className="h-5 w-5 text-primary" />
           <div className="mt-3 text-sm font-semibold">Phone</div>
           <div className="mt-1 text-sm text-muted-foreground">
-            +233 54 474 3630
+            +233 53 120 9142
           </div>
         </div>
         <div className="rounded-3xl bg-muted p-6">
