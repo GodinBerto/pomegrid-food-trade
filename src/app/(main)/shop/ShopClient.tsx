@@ -21,10 +21,11 @@ export default function ShopClient() {
   const category = searchParams.get("category") || undefined;
   const [term, setTerm] = useState(searchParams.get("q") || "");
   const { data: categories = [] as CategoryItem[] } = useListCategories();
-  const { data: products = [] as ProductListItem[] } = useListProducts();
+  const { data: products = [] as ProductListItem[] } = useListProducts({
+    category,
+  });
 
   const filteredProducts = products.filter((p) => {
-    if (category && p.categories?.slug !== category) return false;
     if (term && !p.name.toLowerCase().includes(term.toLowerCase()))
       return false;
     return true;
@@ -54,10 +55,6 @@ export default function ShopClient() {
     router.push(buildShopUrl(category, term), { scroll: false });
   };
 
-  const handleCategorySelect = (nextCategory?: string) => {
-    router.push(buildShopUrl(nextCategory, term), { scroll: false });
-  };
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
       <h1 className="text-3xl font-bold sm:text-4xl">Wholesale farm produce</h1>
@@ -85,24 +82,13 @@ export default function ShopClient() {
       </form>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link
-          href={buildShopUrl(undefined, term)}
-          onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-            e.preventDefault();
-            handleCategorySelect(undefined);
-          }}
-          className={pill(!category)}
-        >
+        <Link href={buildShopUrl(undefined, term)} className={pill(!category)}>
           All
         </Link>
         {categories.map((c) => (
           <Link
             key={c.id}
             href={buildShopUrl(c.slug, term)}
-            onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
-              e.preventDefault();
-              handleCategorySelect(c.slug);
-            }}
             className={pill(category === c.slug)}
           >
             {c.name}

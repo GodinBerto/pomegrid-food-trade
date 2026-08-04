@@ -98,8 +98,17 @@ export type AdminProductPayload = {
 export const productsApi = {
   listProducts: (params?: { category?: string; q?: string }) => {
     const query = new URLSearchParams(
-      params as Record<string, string>,
+      Object.entries(params ?? {}).reduce<Record<string, string>>(
+        (acc, [key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            acc[key] = String(value);
+          }
+          return acc;
+        },
+        {},
+      ),
     ).toString();
+
     return apiRequest<ApiResponse<ProductListItem[]>>(
       `food_trade/products${query ? `?${query}` : ""}`,
       "GET",

@@ -10,9 +10,17 @@ import {
 } from "@/api/products";
 
 export const useListProducts = (params?: { category?: string; q?: string }) => {
+  const queryParams = params
+    ? Object.fromEntries(
+        Object.entries(params).filter(
+          ([, value]) => value !== undefined && value !== null && value !== "",
+        ),
+      )
+    : undefined;
+
   return useQuery<ProductListItem[]>({
-    queryKey: ["products", params],
-    queryFn: async () => (await productsApi.listProducts(params)).data,
+    queryKey: ["products", queryParams],
+    queryFn: async () => (await productsApi.listProducts(queryParams)).data,
   });
 };
 
