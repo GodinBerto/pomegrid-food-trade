@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "@/components/no-prefetch-link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useListCategories } from "@/query/categories";
 import { useListProducts } from "@/query/products";
@@ -16,7 +16,6 @@ type CategoryItem = {
 };
 
 export default function ShopClient() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [category, setCategory] = useState<string | undefined>(
     searchParams.get("category") || undefined,
@@ -33,33 +32,14 @@ export default function ShopClient() {
   }, [searchParams.toString()]);
 
   const filteredProducts = products.filter((p) => {
+    if (category && p.categories?.slug !== category) return false;
     if (term && !p.name.toLowerCase().includes(term.toLowerCase()))
       return false;
     return true;
   });
 
-  const buildShopUrl = (nextCategory?: string, nextTerm?: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (nextCategory) {
-      params.set("category", nextCategory);
-    } else {
-      params.delete("category");
-    }
-
-    if (nextTerm) {
-      params.set("q", nextTerm);
-    } else {
-      params.delete("q");
-    }
-
-    const query = params.toString();
-    return `/shop${query ? `?${query}` : ""}`;
-  };
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(buildShopUrl(category, term), { scroll: false });
   };
 
   return (
@@ -89,17 +69,22 @@ export default function ShopClient() {
       </form>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        <Link href={buildShopUrl(undefined, term)} className={pill(!category)}>
+        <button
+          type="button"
+          onClick={() => setCategory(undefined)}
+          className={pill(!category)}
+        >
           All
-        </Link>
+        </button>
         {categories.map((c) => (
-          <Link
+          <button
             key={c.id}
-            href={buildShopUrl(c.slug, term)}
+            type="button"
+            onClick={() => setCategory(c.slug)}
             className={pill(category === c.slug)}
           >
             {c.name}
-          </Link>
+          </button>
         ))}
       </div>
 
