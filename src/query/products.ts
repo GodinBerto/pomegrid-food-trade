@@ -65,14 +65,24 @@ export const useAdminUpsertProduct = () => {
   return useMutation({
     mutationFn: (payload: AdminProductPayload) =>
       productsApi.adminUpsertProduct(payload),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+    onSuccess: async (data, variables) => {
       const productId = data?.data?.id ?? variables.id;
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["product"] }),
+      ]);
+
       if (productId) {
-        queryClient.invalidateQueries({
-          queryKey: ["product-images", productId],
-        });
+        await Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["product-images", productId],
+          }),
+          queryClient.refetchQueries({
+            queryKey: ["product-images", productId],
+          }),
+        ]);
       }
     },
   });

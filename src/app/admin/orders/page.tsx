@@ -64,7 +64,7 @@ export default function AdminOrders() {
                   <span>
                     {it.product_name} × {it.qty}
                   </span>
-                  <span>{formatGHS(Number(it.unit_price) * it.qty)}</span>
+                  <span>{formatGHS(Number(it.unit_price_ghs) * it.qty)}</span>
                 </div>
               ))}
             </div>

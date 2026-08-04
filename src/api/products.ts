@@ -9,10 +9,16 @@ export interface ApiResponse<T = unknown> {
   status?: number;
 }
 
-export type ProductImage = {
-  id: number;
-  product_id: number;
+export type ProductImagePayload = {
+  id?: number;
   image_url: string;
+  sort_order?: number;
+  is_primary?: boolean;
+};
+
+export type ProductImage = ProductImagePayload & {
+  id: number;
+  product_id?: number;
   sort_order: number;
   created_at?: string;
 };
@@ -30,6 +36,7 @@ export type ProductListItem = {
   is_active?: boolean | number;
   category_id?: string | number | null;
   image_url?: string | null;
+  images?: ProductImagePayload[];
   categories?: {
     slug?: string;
     name?: string;
@@ -85,7 +92,7 @@ export type AdminProductPayload = {
   is_active: boolean | number;
   category_id?: string | number | null;
   image_url?: string | null;
-  images?: string[];
+  images?: ProductImagePayload[];
 };
 
 export const productsApi = {
@@ -130,6 +137,22 @@ export const productsApi = {
   adminUpsertProduct: (payload: AdminProductPayload) =>
     apiRequest<ApiResponse<{ id: number }>>(
       "food_trade/admin/products",
+      "POST",
+      payload,
+    ),
+  adminAddProductImages: (
+    productId: number | string,
+    payload: {
+      image_url?: string | null;
+      images?: Array<{
+        image_url: string;
+        sort_order?: number;
+        is_primary?: boolean;
+      }>;
+    },
+  ) =>
+    apiRequest<ApiResponse<{ images: ProductImage[] }>>(
+      `food_trade/admin/products/${productId}/images`,
       "POST",
       payload,
     ),

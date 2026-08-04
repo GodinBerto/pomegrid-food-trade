@@ -135,9 +135,9 @@ export default function ProductPage({
         </div>
 
         <div>
-          {product.category && (
+          {product.categories?.name && (
             <div className="text-xs font-semibold uppercase tracking-wider text-secondary">
-              {product.category.name}
+              {product.categories.name}
             </div>
           )}
           <h1 className="mt-2 text-3xl font-bold sm:text-4xl">

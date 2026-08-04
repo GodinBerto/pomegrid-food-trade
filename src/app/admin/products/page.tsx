@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type DragEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, X, ImagePlus, Sparkles } from "lucide-react";
 import {
@@ -56,6 +57,8 @@ function slugify(value: string) {
 }
 
 export default function AdminProducts() {
+  const queryClient = useQueryClient();
+
   const { data: products = [], isLoading: isLoadingProducts } =
     useAdminListProducts();
   const { data: cats = [], isLoading: isLoadingCats } =
@@ -71,6 +74,7 @@ export default function AdminProducts() {
     Array<{
       id?: number;
       image_url: string;
+      is_primary?: boolean;
       file?: File;
       previewUrl?: string;
     }>
@@ -157,6 +161,14 @@ export default function AdminProducts() {
 
   async function openEdit(product: AdminProduct) {
     resetImages();
+    const primaryImage =
+      product.images?.find((image) => image.is_primary)?.image_url ??
+      product.images?.find((image) => image.image_url === product.image_url)
+        ?.image_url ??
+      product.images?.[0]?.image_url ??
+      product.image_url ??
+      null;
+
     setEditing({
       id: product.id,
       name: product.name,
@@ -168,7 +180,7 @@ export default function AdminProducts() {
       stock_qty: Number(product.stock_qty ?? 0),
       is_active: !!product.is_active,
       category_id: product.category_id ?? null,
-      image_url: product.image_url ?? null,
+      image_url: primaryImage,
     });
 
     setLoadingImages(true);
@@ -179,24 +191,46 @@ export default function AdminProducts() {
         return;
       }
 
-      const res = await productsApi.getProductImages(product.id);
-      const loaded = res.data ?? [];
-      if (loaded.length > 0) {
+      const imagesFromPayload = Array.isArray(product.images)
+        ? product.images
+        : [];
+      const primaryImageUrl =
+        imagesFromPayload.find((image) => image.is_primary)?.image_url ??
+        imagesFromPayload.find((image) => image.image_url === product.image_url)
+          ?.image_url ??
+        product.image_url ??
+        null;
+
+      if (imagesFromPayload.length > 0) {
         setImageItems(
-          loaded.map((image) => ({
+          imagesFromPayload.map((image) => ({
             id: image.id,
             image_url: image.image_url,
+            is_primary: image.image_url === primaryImageUrl,
           })),
         );
-      } else if (product.image_url) {
-        setImageItems([
-          {
-            id: 0,
-            image_url: product.image_url,
-          },
-        ]);
       } else {
-        setImageItems([]);
+        const res = await productsApi.getProductImages(product.id);
+        const loaded = res.data ?? [];
+        if (loaded.length > 0) {
+          setImageItems(
+            loaded.map((image) => ({
+              id: image.id,
+              image_url: image.image_url,
+              is_primary: image.image_url === primaryImageUrl,
+            })),
+          );
+        } else if (product.image_url) {
+          setImageItems([
+            {
+              id: 0,
+              image_url: product.image_url,
+              is_primary: true,
+            },
+          ]);
+        } else {
+          setImageItems([]);
+        }
       }
     } catch {
       setImageItems(
@@ -225,9 +259,10 @@ export default function AdminProducts() {
       return;
     }
 
-    const newItems = selected.map((file) => ({
+    const newItems = selected.map((file, index) => ({
       file,
       image_url: "",
+      is_primary: imageItems.length === 0 && index === 0,
       previewUrl: URL.createObjectURL(file),
     }));
 
@@ -242,6 +277,15 @@ export default function AdminProducts() {
       }
       return current.filter((_, i) => i !== index);
     });
+  }
+
+  function setPrimaryImage(index: number) {
+    setImageItems((current) =>
+      current.map((item, itemIndex) => ({
+        ...item,
+        is_primary: itemIndex === index,
+      })),
+    );
   }
 
   function handleDragStart(index: number) {
@@ -291,6 +335,12 @@ export default function AdminProducts() {
         }),
       );
       const imageUrls = uploadedUrls.filter(Boolean) as string[];
+      const primaryImageUrl =
+        imageItems.find((item) => item.is_primary)?.image_url ||
+        imageUrls.find((url) => url === editing.image_url) ||
+        imageUrls[0] ||
+        editing.image_url ||
+        null;
 
       const payload = {
         id: editing.id,
@@ -305,15 +355,53 @@ export default function AdminProducts() {
         category_id: editing.category_id ?? null,
       };
 
-      if (imageUrls.length > 0) {
-        await upsertMut({
-          ...payload,
-          image_url: imageUrls[0],
-          images: imageUrls,
+      const upsertResult = await upsertMut(
+        imageUrls.length > 0
+          ? {
+              ...payload,
+              image_url: primaryImageUrl,
+              images: imageItems.map((item, index) => ({
+                image_url: imageUrls[index] ?? item.image_url,
+                sort_order: index,
+                is_primary:
+                  (item.image_url && primaryImageUrl === item.image_url) ||
+                  (index === 0 && !primaryImageUrl),
+              })),
+            }
+          : payload,
+      );
+
+      const productId = upsertResult?.data?.id ?? editing.id;
+      if (productId && imageUrls.length > 0) {
+        await productsApi.adminAddProductImages(productId, {
+          image_url: primaryImageUrl,
+          images: imageItems.map((item, index) => ({
+            image_url: imageUrls[index] ?? item.image_url,
+            sort_order: index,
+            is_primary:
+              (item.image_url && primaryImageUrl === item.image_url) ||
+              (index === 0 && !primaryImageUrl),
+          })),
         });
-      } else {
-        await upsertMut(payload);
       }
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["admin-products"] }),
+        queryClient.invalidateQueries({ queryKey: ["products"] }),
+        queryClient.invalidateQueries({ queryKey: ["product"] }),
+      ]);
+
+      if (productId) {
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ["admin-products"] }),
+          queryClient.refetchQueries({ queryKey: ["products"] }),
+          queryClient.refetchQueries({ queryKey: ["product"] }),
+          queryClient.refetchQueries({
+            queryKey: ["product-images", productId],
+          }),
+        ]);
+      }
+
       toast.success("Product saved");
       closeEditor();
     } catch (err) {
@@ -534,9 +622,21 @@ export default function AdminProducts() {
                               alt={`Product image ${index + 1}`}
                               className="h-20 w-20 rounded-xl object-cover"
                             />
-                            <div className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
-                              {index === 0 ? "Primary" : "Drag"}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setPrimaryImage(index);
+                              }}
+                              className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                image.is_primary
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-background text-foreground"
+                              }`}
+                            >
+                              {image.is_primary ? "Primary" : "Set primary"}
+                            </button>
                             <button
                               type="button"
                               onClick={() => removeImage(index)}
