@@ -2,7 +2,7 @@
 
 import Link from "@/components/no-prefetch-link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useListCategories } from "@/query/categories";
 import { useListProducts } from "@/query/products";
 import { formatGHS, productPrice } from "@/lib/format";
@@ -18,12 +18,19 @@ type CategoryItem = {
 export default function ShopClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const category = searchParams.get("category") || undefined;
-  const [term, setTerm] = useState(searchParams.get("q") || "");
+  const [category, setCategory] = useState<string | undefined>(
+    searchParams.get("category") || undefined,
+  );
+  const [term, setTerm] = useState(() => searchParams.get("q") || "");
   const { data: categories = [] as CategoryItem[] } = useListCategories();
   const { data: products = [] as ProductListItem[] } = useListProducts({
     category,
   });
+
+  useEffect(() => {
+    setCategory(searchParams.get("category") || undefined);
+    setTerm(searchParams.get("q") || "");
+  }, [searchParams.toString()]);
 
   const filteredProducts = products.filter((p) => {
     if (term && !p.name.toLowerCase().includes(term.toLowerCase()))
