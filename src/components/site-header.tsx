@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Image from "next/image";
 
 export function SiteHeader() {
   const { count, hydrated } = useCart();
@@ -49,8 +50,13 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 bg-background/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground font-bold">
-            P
+          <div className="grid place-items-center rounded-full bg-primary text-primary-foreground font-bold overflow-hidden">
+            <Image
+              src="/logos/pomegrid_logo_white_bg.png"
+              alt="Pomegrid"
+              width={40}
+              height={40}
+            />
           </div>
           <div className="leading-tight">
             <div className="text-sm font-bold tracking-tight">Pomegrid</div>

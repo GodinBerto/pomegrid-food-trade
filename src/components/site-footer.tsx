@@ -1,4 +1,5 @@
 import Link from "@/components/no-prefetch-link";
+import Image from "next/image";
 
 export function SiteFooter() {
   return (
@@ -6,8 +7,13 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-4 lg:px-8">
         <div>
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary-foreground text-primary font-bold">
-              P
+            <div className="grid place-items-center rounded-full bg-primary text-primary-foreground font-bold overflow-hidden">
+              <Image
+                src="/logos/pomegrid_logo_white_bg.png"
+                alt="Pomegrid"
+                width={40}
+                height={40}
+              />
             </div>
             <div>
               <div className="font-bold">Pomegrid</div>
