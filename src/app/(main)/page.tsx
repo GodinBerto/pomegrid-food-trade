@@ -96,7 +96,7 @@ export default function Home() {
             <Link
               key={p.id}
               href={`/products/${p.slug}`}
-              className="group flex flex-col overflow-hidden rounded-3xl bg-background ring-1 ring-black/4 border border-black/10 transition-all hover:-translate-y-1"
+              className="group flex flex-col overflow-hidden rounded-3xl bg-background transition-all hover:-translate-y-1"
             >
               <div className="relative aspect-square overflow-hidden bg-muted">
                 <img
@@ -106,12 +106,9 @@ export default function Home() {
                   className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
               </div>
-              <div className="flex flex-1 flex-col gap-1 p-4">
+              <div className="flex flex-1 flex-col gap-1">
                 <div className="text-sm font-bold leading-snug line-clamp-2">
                   {p.name}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  per {p.unit}
                 </div>
                 <div className="mt-3 flex items-end justify-between">
                   <div className="text-lg font-extrabold text-primary">
