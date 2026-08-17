@@ -67,7 +67,7 @@ export default function Home() {
             <Link
               key={p.id}
               href={`/products/${p.slug}`}
-              className="group flex flex-col overflow-hidden rounded-3xl bg-background transition-all hover:-translate-y-1"
+              className="group flex flex-col overflow-hidden rounded-t-3xl bg-background transition-all hover:-translate-y-1"
             >
               <div className="relative aspect-square overflow-hidden bg-muted">
                 <img
