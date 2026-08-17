@@ -57,7 +57,7 @@ export default function Home() {
       {/* Featured products */}
       <section className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-bold sm:text-3xl">Weekly Products</h2>
+          <h2 className="text-2xl font-bold sm:text-3xl">Weekly Listing</h2>
           {/* <Link href="/shop" className="text-sm font-semibold text-primary">
             Browse all →
           </Link> */}
