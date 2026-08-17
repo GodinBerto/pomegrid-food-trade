@@ -32,10 +32,10 @@ export default function Home() {
             <h1 className="mt-5 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
               Wholesale farm produce, sourced across Ghana.
             </h1>
-            <p className="mt-5 max-w-xl text-base opacity-95 sm:text-lg">
+            {/* <p className="mt-5 max-w-xl text-base opacity-95 sm:text-lg">
               Yam, cassava, tomatoes, pepper, grains and more — bought in bulk,
               ready for resellers, restaurants and markets.
-            </p>
+            </p> */}
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href="/shop"
