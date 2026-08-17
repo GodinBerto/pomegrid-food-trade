@@ -21,8 +21,7 @@ export function SiteFooter() {
             </div>
           </div>
           <p className="mt-4 text-sm opacity-80 max-w-xs">
-            Wholesale marketplace for Ghana's farm produce. Looking for fish?
-            Visit aqua.pomegrid.com.
+            Wholesale marketplace for Ghana's farm produce.
           </p>
         </div>
         <div>
