@@ -58,9 +58,9 @@ export default function Home() {
       <section className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
         <div className="flex items-end justify-between">
           <h2 className="text-2xl font-bold sm:text-3xl">Weekly Products</h2>
-          <Link href="/shop" className="text-sm font-semibold text-primary">
+          {/* <Link href="/shop" className="text-sm font-semibold text-primary">
             Browse all →
-          </Link>
+          </Link> */}
         </div>
         <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4">
           {featured.map((p: ProductListItem) => (
