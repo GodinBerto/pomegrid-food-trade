@@ -54,35 +54,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Value props */}
-      <section className="mx-auto max-w-7xl px-4 py-14 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            {
-              icon: Truck,
-              title: "Bulk delivery",
-              body: "Sourced directly from farmers across all 16 regions of Ghana.",
-            },
-            {
-              icon: ShieldCheck,
-              title: "Quality graded",
-              body: "Every bag, crate and drum is sorted and graded before dispatch.",
-            },
-            {
-              icon: MessagesSquare,
-              title: "Live pricing",
-              body: "Join a regional WhatsApp group for daily price updates.",
-            },
-          ].map((f) => (
-            <div key={f.title} className="rounded-3xl bg-muted p-6">
-              <f.icon className="h-6 w-6 text-primary" />
-              <div className="mt-4 text-lg font-semibold">{f.title}</div>
-              <p className="mt-1 text-sm text-muted-foreground">{f.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Featured products */}
       <section className="mx-auto max-w-7xl px-4 py-6 lg:px-8">
         <div className="flex items-end justify-between">
@@ -161,6 +132,35 @@ export default function Home() {
                 </div>
               </div>
             </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Value props */}
+      <section className="mx-auto max-w-7xl px-4 py-14 lg:px-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              icon: Truck,
+              title: "Bulk delivery",
+              body: "Sourced directly from farmers across all 16 regions of Ghana.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Quality graded",
+              body: "Every bag, crate and drum is sorted and graded before dispatch.",
+            },
+            {
+              icon: MessagesSquare,
+              title: "Live pricing",
+              body: "Join a regional WhatsApp group for daily price updates.",
+            },
+          ].map((f) => (
+            <div key={f.title} className="rounded-3xl bg-muted p-6">
+              <f.icon className="h-6 w-6 text-primary" />
+              <div className="mt-4 text-lg font-semibold">{f.title}</div>
+              <p className="mt-1 text-sm text-muted-foreground">{f.body}</p>
+            </div>
           ))}
         </div>
       </section>
